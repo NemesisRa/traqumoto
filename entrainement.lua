@@ -1,11 +1,12 @@
 require 'torch'
 require 'nn'
+require 'trepl'
 
 N = 15 + 64
 l = 70
 L = 140
 
-train_data = torch.load('train_data.t7')
+train_data = torch.load('train_data.t7','ascii')
 
 net = nn.Sequential();  -- make a multi-layer perceptron
 inputs = 3*l*L; outputs = 1; HL = 50000; -- parameters
