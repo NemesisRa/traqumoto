@@ -2,7 +2,6 @@ require 'torch'
 require 'image'
 require 'nn'
 require 'trepl'
-require 'nngraph'
 
 N = 15 + 64
 l = 70
@@ -47,29 +46,29 @@ net = nn.Sequential();  -- make a multi-layer perceptron
 inputs = 3; outputs = 2; -- parameters
 
 net = nn.Sequential()
-net:add(nn.SpatialConvolution(inputs, 6, 5, 10)) -- 3 input image channels, 6 output channels, 5x5 convolution kernel
-net:add(nn.ReLU())                       -- non-linearity 
-net:add(nn.SpatialMaxPooling(2,2,2,2))     -- A max-pooling operation that looks at 2x2 windows and finds the max.
+net:add(nn.SpatialConvolution(inputs, 6, 5, 10)) -- 3 input image channels, 6 output channels, 5x10 convolution kernel
+net:add(nn.ReLU())				-- non-linearity 
+net:add(nn.SpatialMaxPooling(2,2,2,2))		-- A max-pooling operation that looks at 2x2 windows and finds the max.
 net:add(nn.SpatialConvolution(6, 16, 5, 10))
-net:add(nn.ReLU())                       -- non-linearity 
+net:add(nn.ReLU())				-- non-linearity 
 net:add(nn.SpatialMaxPooling(2,2,2,2))
-net:add(nn.SpatialConvolution(16, 32, 5, 10))
-net:add(nn.ReLU())                       -- non-linearity 
+net:add(nn.SpatialConvolution(16, 32, 5, 10))	
+net:add(nn.ReLU())				-- non-linearity 
 net:add(nn.SpatialMaxPooling(2,2,2,2))
-net:add(nn.View(32*9*5))                    -- reshapes from a 3D tensor into 1D tensor
-net:add(nn.Linear(32*9*5, 200))             -- fully connected layer (matrix multiplication between input and weights)
-net:add(nn.ReLU())
-net:add(nn.Linear(200, 120))             -- fully connected layer (matrix multiplication between input and weights)
-net:add(nn.ReLU())                       -- non-linearity 
-net:add(nn.Linear(120, 84))
-net:add(nn.ReLU())                       -- non-linearity 
-net:add(nn.Linear(84, outputs))                   -- the number of outputs of the network
-net:add(nn.LogSoftMax())                     -- converts the output to a log-probability. Useful for classification problems
+net:add(nn.View(32*9*5))			-- reshapes from a 3D tensor into 1D tensor
+net:add(nn.Linear(32*9*5, 200))			-- fully connected layer (matrix multiplication between input and weights)
+net:add(nn.ReLU())				-- non-linearity 
+net:add(nn.Linear(200, 120))			-- fully connected layer (matrix multiplication between input and weights)
+net:add(nn.ReLU())				-- non-linearity 
+net:add(nn.Linear(120, 84))			-- fully connected layer (matrix multiplication between input and weights)
+net:add(nn.ReLU())				-- non-linearity 
+net:add(nn.Linear(84, outputs))			-- the number of outputs of the network
+net:add(nn.LogSoftMax())			-- converts the output to a log-probability. Useful for classification problems
 
 criterion = nn.ClassNLLCriterion()
 trainer = nn.StochasticGradient(net, criterion)
 trainer.learningRate = 0.001
-trainer.maxIteration = 100
+trainer.maxIteration = 200
 trainer:train(dataset)
 
 predicted = net:forward(dataset[1][1])
@@ -78,3 +77,21 @@ predicted = net:forward(dataset[2][1])
 print(predicted:exp())
 predicted = net:forward(dataset[N][1])
 print(predicted:exp())
+
+Img = image.load('BDD/Images_a_tester/Motos01.PNG',3)
+
+width = Img[1]:size()[1]
+length = Img[1]:size()[2]
+
+for i=1,width-L do
+	print(string.format('Ligne %03d \n', i))
+	for j=1,length-l do
+		predicted = net:forward(Img[{{},{i,i+L},{j,j+l}}])
+		predicted:exp()
+		if predicted[1]>0.90 then
+			image.drawRect(Img, i, j, i+L, j+l, {lineWidth = 3, color = {0, 255, 0}})
+		end
+	end
+end
+
+image.display(Img)
