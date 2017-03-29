@@ -1,9 +1,14 @@
 require 'torch'
 require 'image'
+require 'nn'
+require 'trepl'
 
 N = 15 + 64
 l = 70
 L = 140
+
+classes = {'Moto', 'Pas_Moto'}
+n_classes = 2
 
 imgset = torch.Tensor(N,3,L,l):zero()
 labelset = torch.Tensor(N):zero()
@@ -16,13 +21,22 @@ for i = 1,N do
 	else
 		imgname = string.format('BDD/Pas_Motos/%02d.PNG', i-15)
 		Img = image.load(imgname,3)
-		labelset[i] = 0
+		labelset[i] = 2
 	end
 	r_image = image.scale(Img, l, L)
 	imgset[i] = torch.Tensor(3,l,L):copy(r_image)
 	Img = nil
 end
 
-train_data = {data = imgset, label=labelset}
+dataset = {}
+for i=1,imgset:size(1) do
+  local input = imgset[i]
+  local target = labelset[i]
+  dataset[i] = {input, target}
+end
 
-torch.save('train_data.t7', train_data, 'ascii')
+function dataset:size()
+    return imgset:size(1)
+end
+
+torch.save('train_data.t7', dataset, 'ascii')

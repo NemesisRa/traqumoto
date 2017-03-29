@@ -84,7 +84,7 @@ width = Img[1]:size()[1]
 length = Img[1]:size()[2]
 
 for i=1,width-L do
-	print(string.format('Ligne %03d \n', i))
+	print(string.format('[%03d\%]Prédiction de l\'image', i/width-L))
 	for j=1,length-l do
 		predicted = net:forward(Img[{{},{i,i+L},{j,j+l}}])
 		predicted:exp()
