@@ -9,7 +9,7 @@ L = 140
 
 net = torch.load('network.t7','ascii')
 
-Img = image.load('BDD/Images_a_tester/Motos01.PNG',3)
+Img = image.load('BDD/Images_a_tester/Motos04.PNG',3)
 
 width = Img[1]:size()[1]
 length = Img[1]:size()[2]
