@@ -15,7 +15,7 @@ width = Img[1]:size()[1]
 length = Img[1]:size()[2]
 
 for i=1,width-L,10 do
-	print(string.format('[%2f', i/(width-L)*100)..'%] Prédiction de l\'image')
+	print(string.format('[%2.0f', i/(width-L)*100)..'%] Prédiction de l\'image')
 	for j=1,length-l,10 do
 		predicted = net:forward(Img[{{},{i,i+L},{j,j+l}}])
 		predicted:exp()
