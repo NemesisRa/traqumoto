@@ -35,7 +35,7 @@ net:add(nn.LogSoftMax())			-- converts the output to a log-probability. Useful f
 criterion = nn.ClassNLLCriterion()
 trainer = nn.StochasticGradient(net, criterion)
 trainer.learningRate = 0.001
-trainer.maxIteration = 200
+trainer.maxIteration = 300
 trainer:train(dataset)
 
 torch.save('network.t7', net, 'ascii')

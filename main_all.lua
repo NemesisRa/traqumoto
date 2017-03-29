@@ -83,13 +83,13 @@ Img = image.load('BDD/Images_a_tester/Motos01.PNG',3)
 width = Img[1]:size()[1]
 length = Img[1]:size()[2]
 
-for i=1,width-L do
-	print(string.format('[%03d\%]Prédiction de l\'image', i/width-L))
-	for j=1,length-l do
+for i=1,width-L,10 do
+	print(string.format('[%2.1f', i/(width-L)*100)..'%]Prédiction de l\'image')
+	for j=1,length-l,10 do
 		predicted = net:forward(Img[{{},{i,i+L},{j,j+l}}])
 		predicted:exp()
 		if predicted[1]>0.90 then
-			image.drawRect(Img, i, j, i+L, j+l, {lineWidth = 3, color = {0, 255, 0}})
+			Img = image.drawRect(Img, j, i, j+l, i+L, {lineWidth = 3, color = {0, 255, 0}})
 		end
 	end
 end
