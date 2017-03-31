@@ -15,4 +15,4 @@ r_image = image.scale(Img, l, L)
 predicted = net:forward(r_image)
 print(predicted:exp())
 
-image.display(Img)
+image.display(r_image)

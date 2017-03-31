@@ -3,7 +3,9 @@ require 'image'
 require 'nn'
 require 'trepl'
 
-N = 15 + 64
+n1 = 15
+n2 = 64
+N = n1 + n2
 l = 70
 L = 140
 
