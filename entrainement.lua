@@ -11,6 +11,10 @@ L = 140
 
 dataset = torch.load('train_data.t7','ascii')
 
+function dataset:size()
+    return N
+end
+
 net = nn.Sequential();  -- make a multi-layer perceptron
 inputs = 3; outputs = 2; -- parameters
 
