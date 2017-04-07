@@ -127,4 +127,4 @@ function dataset:size()
     return N*nt
 end
 
-torch.save('train_data.t7', dataset)
+torch.save('dataset.t7', dataset)

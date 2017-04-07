@@ -10,7 +10,7 @@ N = n1 + n2
 l = 70
 L = 140
 
-dataset = torch.load('train_data.t7')
+dataset = torch.load('dataset.t7')
 
 function dataset:size()
     return N*nt
