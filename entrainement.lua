@@ -3,16 +3,17 @@ require 'image'
 require 'nn'
 require 'trepl'
 
-n1 = 15
-n2 = 64
+nt = 1
+n1 = 100
+n2 = 130
 N = n1 + n2
 l = 70
 L = 140
 
-dataset = torch.load('train_data.t7','ascii')
+dataset = torch.load('train_data.t7')
 
 function dataset:size()
-    return N
+    return N*nt
 end
 
 net = nn.Sequential();  -- make a multi-layer perceptron
@@ -41,7 +42,7 @@ net:add(nn.LogSoftMax())			-- converts the output to a log-probability. Useful f
 criterion = nn.ClassNLLCriterion()
 trainer = nn.StochasticGradient(net, criterion)
 trainer.learningRate = 0.001
-trainer.maxIteration = 350
+trainer.maxIteration = 50
 trainer:train(dataset)
 
-torch.save('network.t7', net, 'ascii')
+torch.save('network.t7', net)
