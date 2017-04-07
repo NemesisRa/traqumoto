@@ -3,28 +3,30 @@ require 'image'
 require 'nn'
 require 'trepl'
 
-N = 15 + 64
+n1 = 15
+n2 = 64
+N = n1 + n2
 l = 70
 L = 140
 
 classes = {'Moto', 'Pas_Moto'}
 n_classes = 2
 
-imgset = torch.Tensor(N,3,L,l):zero()
+imgset = torch.Tensor(N,1,L,l):zero()
 labelset = torch.Tensor(N):zero()
 
 for i = 1,N do
-	if i <= 15 then
+	if i <= n1 then
 		imgname = string.format('BDD/Motos/%02d.PNG', i)
-		Img = image.load(imgname,3)
+		Img = image.load(imgname,1)
 		labelset[i] = 1
 	else
-		imgname = string.format('BDD/Pas_Motos/%02d.PNG', i-15)
-		Img = image.load(imgname,3)
+		imgname = string.format('BDD/Pas_Motos/%02d.PNG', i-n1)
+		Img = image.load(imgname,1)
 		labelset[i] = 2
 	end
 	r_image = image.scale(Img, l, L)
-	imgset[i] = torch.Tensor(3,l,L):copy(r_image)
+	imgset[i] = torch.Tensor(1,l,L):copy(r_image)
 	Img = nil
 end
 
