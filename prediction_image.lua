@@ -6,7 +6,7 @@ require 'math'
 
 nt = 1
 n1 = 100
-n2 = 130
+n2 = 300
 N = n1 + n2
 l = 70
 L = 140
