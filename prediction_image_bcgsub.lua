@@ -21,7 +21,7 @@ L = 140
 
 net = torch.load('network.t7')
 
-vidname = 'Video/2s.avi'
+vidname = '/home/manuel/Videos/06.avi'
 vid = cv.VideoCapture{vidname}
 if not vid:isOpened() then
     print("Failed to open the video")
@@ -37,28 +37,69 @@ length = Img:size()[2] ]]
 
 pMOG2 = cv.BackgroundSubtractorMOG2{}
 local _, frame = vid:read{}
+for i=1,30 do
+	if not(vid:read{frame}) then
+		break
+	end
+	fgMaskMOG2 = pMOG2:apply{frame}
+end
+
+key=0
 while key~=27 and key~=113 do
 	if not(vid:read{frame}) then
 		break
 	end
 	fgMaskMOG2 = pMOG2:apply{frame}
-	cv.imshow{"Frame", frame}
-        cv.imshow{"FG Mask MOG2", fgMaskMOG2}
-	key=cv.waitKey{30}
+
+	width = frame:size()[1]
+	length = frame:size()[2]
+	Img = torch.Tensor(width,length):zero()
+	Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
+
+	for i=L/2+2,width-L/2,5 do
+		print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
+		for j=l/2+2,length-l/2,5 do
+			m = (fgMaskMOG2[i][j]+fgMaskMOG2[i+1][j]+fgMaskMOG2[i][j+1]+fgMaskMOG2[i-1][j]+fgMaskMOG2[i][j-1]+fgMaskMOG2[i-1][j-1]+fgMaskMOG2[i-1][j+1]+fgMaskMOG2[i+1][j-1]+fgMaskMOG2[i+1][j+1])/9
+			if m>150 then
+				--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,0,0}}
+				sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
+				predicted = net:forward(sub:view(1,L,l))
+				predicted = predicted:exp()
+				if predicted[1]>0.9 then
+					cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
+				end
+			end
+		end
+	end
+
+	cv.namedWindow{'win1'}
+	cv.setWindowTitle{'win1', 'N&B'}
+	cv.imshow{'win1', Img}
+
+	cv.namedWindow{'win2'}
+	cv.setWindowTitle{'win2', 'Mask'}
+	cv.imshow{'win2', fgMaskMOG2}
+
+	cv.namedWindow{'win3'}
+	cv.setWindowTitle{'win3', 'Couleur'}
+	cv.imshow{'win3', frame}
+	key=cv.waitKey{1}
+	
+	for i=1,4 do
+		if not(vid:read{frame}) then
+			break
+		end
+		fgMaskMOG2 = pMOG2:apply{frame}
+	end
 end
 
+cv.waitKey{0}
 cv.destroyAllWindows{}
 
-print(fgMaskMOG2:size())
-print(fgMaskMOG2[1][1])
-
-width = frame:size()[1]
+--[[width = frame:size()[1]
 length = frame:size()[2]
-print(frame:size())
 Img = torch.Tensor(width,length):zero()
 Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
-
-print(Img:size())
 
 for i=L/2+1,width-L/2,5 do
 	print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
@@ -67,10 +108,9 @@ for i=L/2+1,width-L/2,5 do
 			--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,0,0}}
 			sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
 			predicted = net:forward(sub:view(1,L,l))
-			predicted:exp()
+			predicted = predicted:exp()
 			if predicted[1]>0.9 then
 				cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
-
 			end
 		end
 	end
@@ -88,4 +128,4 @@ cv.namedWindow{'win3'}
 cv.setWindowTitle{'win3', 'Couleur'}
 cv.imshow{'win3', frame}
 cv.waitKey{0}
-cv.destroyAllWindows{}
+cv.destroyAllWindows{}]]
