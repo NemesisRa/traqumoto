@@ -13,7 +13,7 @@ L = 140
 
 net = torch.load('network.t7')
 
-imgname = 'BDD/Image_à_tester/Motos04.PNG'
+imgname = 'BDD/Image_à_tester/vidtest.png'
 Imgcoul = image.load(imgname,3)
 Img = image.load(imgname,1,'byte')
 

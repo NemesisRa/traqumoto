@@ -10,6 +10,7 @@ require 'cv.highgui'
 require 'cv.objdetect'
 require 'cv.videoio'
 require 'cv.imgproc'
+require 'cv.video'
 
 nt = 1
 n1 = 100
@@ -20,22 +21,57 @@ L = 140
 
 net = torch.load('network.t7')
 
-imgname = 'BDD/Image_à_tester/Motos04.PNG'
+vidname = 'Video/2s.avi'
+vid = cv.VideoCapture{vidname}
+if not vid:isOpened() then
+    print("Failed to open the video")
+    os.exit(-1)
+end
+
+--[[imgname = 'BDD/Image_à_tester/Motos04.PNG'
 Imgcoul = cv.imread{imgname}
 Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
 
 width = Img:size()[1]
-length = Img:size()[2]
+length = Img:size()[2] ]]
 
-for i=1,width-L,5 do
-	print(string.format('[%2.0f', i/(width-L)*100)..'%] Prédiction de l\'image')
-	for j=1,length-l,5 do
-		sub = torch.Tensor(1,L,l):copy(Img:sub(i,i+L-1,j,j+l-1))
-		predicted = net:forward(sub:view(1,L,l))
-		predicted:exp()
-		if predicted[1]>0.999 then
-			cv.rectangle{Imgcoul, pt1={j, i}, pt2={j+l-1, i+L-1}, color = {0,255,0}}
+pMOG2 = cv.BackgroundSubtractorMOG2{}
+local _, frame = vid:read{}
+while key~=27 and key~=113 do
+	if not(vid:read{frame}) then
+		break
+	end
+	fgMaskMOG2 = pMOG2:apply{frame}
+	cv.imshow{"Frame", frame}
+        cv.imshow{"FG Mask MOG2", fgMaskMOG2}
+	key=cv.waitKey{30}
+end
 
+cv.destroyAllWindows{}
+
+print(fgMaskMOG2:size())
+print(fgMaskMOG2[1][1])
+
+width = frame:size()[1]
+length = frame:size()[2]
+print(frame:size())
+Img = torch.Tensor(width,length):zero()
+Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
+
+print(Img:size())
+
+for i=L/2+1,width-L/2,5 do
+	print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
+	for j=l/2+1,length-l/2,5 do
+		if fgMaskMOG2[i][j] > 150 then
+			--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,0,0}}
+			sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
+			predicted = net:forward(sub:view(1,L,l))
+			predicted:exp()
+			if predicted[1]>0.9 then
+				cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
+
+			end
 		end
 	end
 end
@@ -45,7 +81,11 @@ cv.setWindowTitle{'win1', 'N&B'}
 cv.imshow{'win1', Img}
 
 cv.namedWindow{'win2'}
-cv.setWindowTitle{'win2', 'Couleur'}
-cv.imshow{'win2', Imgcoul}
+cv.setWindowTitle{'win2', 'Mask'}
+cv.imshow{'win2', fgMaskMOG2}
+
+cv.namedWindow{'win3'}
+cv.setWindowTitle{'win3', 'Couleur'}
+cv.imshow{'win3', frame}
 cv.waitKey{0}
 cv.destroyAllWindows{}
