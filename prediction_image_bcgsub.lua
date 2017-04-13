@@ -21,7 +21,7 @@ L = 140
 
 net = torch.load('network.t7')
 
-vidname = '/home/manuel/Videos/06.avi'
+vidname = 'Video/test.avi'
 vid = cv.VideoCapture{vidname}
 if not vid:isOpened() then
     print("Failed to open the video")
@@ -44,6 +44,23 @@ for i=1,30 do
 	fgMaskMOG2 = pMOG2:apply{frame}
 end
 
+width = frame:size()[1]
+length = frame:size()[2]
+Img = torch.Tensor(width,length):zero()
+Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
+
+cv.namedWindow{'win1'}
+cv.setWindowTitle{'win1', 'N&B'}
+cv.imshow{'win1', Img}
+
+cv.namedWindow{'win2'}
+cv.setWindowTitle{'win2', 'Mask'}
+cv.imshow{'win2', fgMaskMOG2}
+
+cv.namedWindow{'win3'}
+cv.setWindowTitle{'win3', 'Couleur'}
+cv.imshow{'win3', frame}
+
 key=0
 while key~=27 and key~=113 do
 	if not(vid:read{frame}) then
@@ -51,46 +68,41 @@ while key~=27 and key~=113 do
 	end
 	fgMaskMOG2 = pMOG2:apply{frame}
 
-	width = frame:size()[1]
-	length = frame:size()[2]
-	Img = torch.Tensor(width,length):zero()
 	Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 
-	for i=L/2+2,width-L/2,5 do
+	for i=L/2+1,width-L/2,5 do
 		print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
-		for j=l/2+2,length-l/2,5 do
-			m = (fgMaskMOG2[i][j]+fgMaskMOG2[i+1][j]+fgMaskMOG2[i][j+1]+fgMaskMOG2[i-1][j]+fgMaskMOG2[i][j-1]+fgMaskMOG2[i-1][j-1]+fgMaskMOG2[i-1][j+1]+fgMaskMOG2[i+1][j-1]+fgMaskMOG2[i+1][j+1])/9
-			if m>150 then
+		for j=l/2+1,length-l/2,5 do
+			m=0
+			for k=-5,5 do
+				for l=-4,4 do
+					m=m+fgMaskMOG2[i+k][j+l]
+				end
+			end
+			m=m/99
+			if m>200 then
 				--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,0,0}}
 				sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
 				predicted = net:forward(sub:view(1,L,l))
 				predicted = predicted:exp()
-				if predicted[1]>0.9 then
+				if predicted[1]>0.999 then
 					cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
 				end
 			end
 		end
 	end
 
-	cv.namedWindow{'win1'}
-	cv.setWindowTitle{'win1', 'N&B'}
 	cv.imshow{'win1', Img}
-
-	cv.namedWindow{'win2'}
-	cv.setWindowTitle{'win2', 'Mask'}
 	cv.imshow{'win2', fgMaskMOG2}
-
-	cv.namedWindow{'win3'}
-	cv.setWindowTitle{'win3', 'Couleur'}
 	cv.imshow{'win3', frame}
 	key=cv.waitKey{1}
 	
-	for i=1,4 do
+	--[[for i=1,4 do
 		if not(vid:read{frame}) then
 			break
 		end
 		fgMaskMOG2 = pMOG2:apply{frame}
-	end
+	end]]
 end
 
 cv.waitKey{0}
