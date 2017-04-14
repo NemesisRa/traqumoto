@@ -97,12 +97,12 @@ while key~=27 and key~=113 do
 	cv.imshow{'win3', frame}
 	key=cv.waitKey{1}
 	
-	--[[for i=1,4 do
+	for i=1,2 do
 		if not(vid:read{frame}) then
 			break
 		end
 		fgMaskMOG2 = pMOG2:apply{frame}
-	end]]
+	end
 end
 
 cv.waitKey{0}

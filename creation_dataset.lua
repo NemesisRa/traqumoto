@@ -20,18 +20,18 @@ k=1
 for i = 1,N do
 	if i <= n1 then
 		if i<100 then
-			imgname = string.format('BDD/Motos/%02d.png', i)
+			imgname = string.format('BDD/Motos/%02d.png', i)	-- images de 01 à 99
 		else
-			imgname = string.format('BDD/Motos/%03d.png', i)
+			imgname = string.format('BDD/Motos/%03d.png', i)	-- images de 100 à 999
 		end
 		for j=k,k+nt-1 do
 			labelset[j] = 1
 		end
 	else
 		if i-n1<100 then
-			imgname = string.format('BDD/Pas_Motos/%02d.png', i-n1)
+			imgname = string.format('BDD/Pas_Motos/%02d.png', i-n1)		--images de 01 à 99
 		else
-			imgname = string.format('BDD/Pas_Motos/%03d.png', i-n1)
+			imgname = string.format('BDD/Pas_Motos/%03d.png', i-n1)		-- images de 100 à 999
 		end
 		for j=k,k+nt-1 do
 			labelset[j] = 2
@@ -115,6 +115,15 @@ for i = 1,N do
 
 	Img = nil
 end
+
+mean = imgset:mean()
+stdv = imgset:std()
+
+imgset = imgset:apply(function(x)
+		x=x*(42/stdv)-mean+127
+		x = math.max(math.min(x,255),0)
+		return x
+	end)
 
 dataset = {}
 for i=1,N*nt do
