@@ -5,11 +5,11 @@ require 'trepl'
 require 'math'
 
 nt = 1
-n1 = 100
-n2 = 390
+n1 = 140
+n2 = 500
 N = n1 + n2
-l = 70
-L = 140
+l = 60
+L = 120
 
 net = torch.load('network.t7')
 

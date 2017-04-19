@@ -13,15 +13,15 @@ require 'cv.imgproc'
 require 'cv.video'
 
 nt = 1
-n1 = 100
-n2 = 130
+n1 = 140
+n2 = 500
 N = n1 + n2
-l = 70
-L = 140
+l = 60
+L = 120
 
 net = torch.load('network.t7')
 
-vidname = 'Video/test.avi'
+vidname = 'Video/test2.mp4'
 vid = cv.VideoCapture{vidname}
 if not vid:isOpened() then
     print("Failed to open the video")
@@ -73,20 +73,22 @@ while key~=27 and key~=113 do
 	for i=L/2+1,width-L/2,5 do
 		print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
 		for j=l/2+1,length-l/2,5 do
-			m=0
-			for k=-5,5 do
-				for l=-4,4 do
-					m=m+fgMaskMOG2[i+k][j+l]
+			if fgMaskMOG2[i][j]>250 then
+				m=0
+				for k=-5,5 do
+					for l=-4,4 do
+						m=m+fgMaskMOG2[i+k][j+l]
+					end
 				end
-			end
-			m=m/99
-			if m>200 then
-				--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,0,0}}
-				sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
-				predicted = net:forward(sub:view(1,L,l))
-				predicted = predicted:exp()
-				if predicted[1]>0.999 then
-					cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
+				m=m/99
+				if m>200 then
+					--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,0,0}}
+					sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
+					predicted = net:forward(sub:view(1,L,l))
+					--predicted = predicted:exp()
+					if predicted[1]==1 then
+						cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
+					end
 				end
 			end
 		end

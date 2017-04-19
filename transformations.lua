@@ -7,8 +7,8 @@ require 'math'
 n1 = 15
 n2 = 64
 N = n1 + n2
-l = 70
-L = 140
+l = 60
+L = 120
 
 imgname = 'BDD/Motos/35.png'
 Img = image.load(imgname,1,'byte')

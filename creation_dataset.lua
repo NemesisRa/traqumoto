@@ -4,17 +4,17 @@ require 'nn'
 require 'trepl'
 
 nt = 1
-n1 = 100
-n2 = 390
+n1 = 140
+n2 = 500
 N = n1 + n2
-l = 70
-L = 140
+l = 60
+L = 120
 
 classes = {'Moto', 'Pas_Moto'}
 n_classes = 2
 
 imgset = torch.Tensor(N*nt,1,L,l):zero()
-labelset = torch.Tensor(N*nt):zero()
+labelset = torch.Tensor(N*nt,1):zero()
 
 k=1
 for i = 1,N do
@@ -34,7 +34,7 @@ for i = 1,N do
 			imgname = string.format('BDD/Pas_Motos/%03d.png', i-n1)		-- images de 100 à 999
 		end
 		for j=k,k+nt-1 do
-			labelset[j] = 2
+			labelset[j] = 0
 		end
 	end
 	Img = image.load(imgname,1,'byte')

@@ -3,8 +3,8 @@ require 'image'
 require 'nn'
 require 'trepl'
 
-l = 70
-L = 140
+l = 60
+L = 120
 
 net = torch.load('network.t7','ascii')
 
