@@ -45,10 +45,13 @@ Img = torch.Tensor(width,length):zero()
 Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 
 cv.namedWindow{'win1'}
-cv.setWindowTitle{'win1', 'Couleur'}
+cv.setWindowTitle{'win1', 'N&B'}
 
 cv.namedWindow{'win2'}
 cv.setWindowTitle{'win2', 'Mask'}
+
+cv.namedWindow{'win3'}
+cv.setWindowTitle{'win3', 'Couleur'}
 
 local pause = false
 local key = 0
@@ -74,6 +77,13 @@ while true do
 		end
 
 		fgMaskMOG2 = pMOG2:apply{frame}
+
+		cv.threshold{fgMaskMOG2, fgMaskMOG2, 100, 255, cv.THRESH_BINARY}
+		erodeElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{4,4}}
+		cv.erode{fgMaskMOG2,fgMaskMOG2,erodeElement}
+		dilateElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{6,6}}
+		cv.dilate{fgMaskMOG2,fgMaskMOG2,dilateElement}
+
 		Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 		for i=L/2+1,width-L/2,5 do
 			--print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
@@ -107,9 +117,10 @@ while true do
 					end
 				end
 			end
-		end			
-		cv.imshow{'win1', frame}
+		end
+		cv.imshow{'win1', Img}			
 		cv.imshow{'win2', fgMaskMOG2}
+		cv.imshow{'win3', frame}
 		key=cv.waitKey{1} --en ms	
 		
 	end
@@ -118,4 +129,3 @@ end
 
 
 cv.destroyAllWindows{}
-os.exit(0)
