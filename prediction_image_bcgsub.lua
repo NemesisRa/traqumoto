@@ -20,7 +20,7 @@ l = 60
 L = 120
 
 net = torch.load('network.t7')
-vidname = 'Video/test.avi'
+vidname = 'Video/aa.avi'
 vid = cv.VideoCapture{vidname}
 
 if not vid:isOpened() then
@@ -79,10 +79,13 @@ while true do
 		fgMaskMOG2 = pMOG2:apply{frame}
 
 		cv.threshold{fgMaskMOG2, fgMaskMOG2, 100, 255, cv.THRESH_BINARY}
+
 		erodeElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{4,4}}
 		cv.erode{fgMaskMOG2,fgMaskMOG2,erodeElement}
 		dilateElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{6,6}}
 		cv.dilate{fgMaskMOG2,fgMaskMOG2,dilateElement}
+--
+				
 
 		Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 		for i=L/2+1,width-L/2,5 do
@@ -96,22 +99,23 @@ while true do
 						end
 					end
 					m=m/99
-					if m>200 then
+					if m>250 then
 						m = 0
 						n = 0
-						for k=-L/2,L/2 do
-							m=m+fgMaskMOG2[i+k][j-l/2]
-							n=n+fgMaskMOG2[i+k][j+l/2]
+						for k=-L/4,L/4 do
+							m=m+fgMaskMOG2[i+k][j-25]
+							n=n+fgMaskMOG2[i+k][j+25]
 						end
-						m=m/L
-						n=n/L
-						if m<50 and n<50 then
-							--cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {255,255,255}}
+						m=m/(L/2+1)
+						n=n/(L/2+1)
+						if m<70 and n<70 then 
+							cv.rectangle{Img, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,255}}
 							sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
 							predicted = net:forward(sub:view(1,L,l))
 							--predicted = predicted:exp()
 							if predicted[1]==1 then
 								cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
+							--print(m)				
 							end
 						end
 					end
@@ -125,6 +129,8 @@ while true do
 		
 	end
 end
+
+
 
 
 
