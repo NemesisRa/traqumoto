@@ -13,8 +13,8 @@ require 'cv.imgproc'
 require 'cv.video'
 
 nt = 10
-n1 = 140
-n2 = 500
+n1 = 212
+n2 = 600
 N = n1 + n2
 l = 60
 L = 120
