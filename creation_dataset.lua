@@ -2,6 +2,8 @@ require 'torch'
 require 'image'
 require 'nn'
 require 'trepl'
+require 'cunn'
+require 'cutorch'
 cv = require 'cv'
 require 'cv.features2d'
 require 'cv.imgcodecs'
@@ -112,8 +114,8 @@ imgset = imgset:apply(function(x)
 
 dataset = {}
 for i=1,N*nt do
-  local input = imgset[i]
-  local target = labelset[i]
+  local input = imgset[i]:cuda()
+  local target = labelset[i]:cuda()
   dataset[i] = {input, target}
 end
 

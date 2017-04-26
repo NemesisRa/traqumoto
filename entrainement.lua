@@ -2,6 +2,8 @@ require 'torch'
 require 'image'
 require 'nn'
 require 'trepl'
+require 'cunn'
+require 'cutorch'
 
 nt = 10
 n1 = 140
@@ -32,10 +34,12 @@ net:add(nn.ReLU())				-- non-linearity
 net:add(nn.Linear(2000, outputs))			-- the number of outputs of the network
 net:add(nn.Sigmoid())			-- converts the output to a log-probability. Useful for classification problems
 
-criterion = nn.BCECriterion()
+net = net:cuda()
+
+criterion = nn.BCECriterion():cuda()
 trainer = nn.StochasticGradient(net, criterion)
 trainer.learningRate = 0.001
-trainer.maxIteration = 50
+trainer.maxIteration = 100
 trainer:train(dataset)
 
 torch.save('network.t7', net)

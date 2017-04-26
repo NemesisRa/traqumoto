@@ -3,6 +3,8 @@ require 'image'
 require 'nn'
 require 'trepl'
 require 'math'
+require 'cutorch'
+require'cunn'
 cv = require 'cv'
 require 'cv.features2d'
 require 'cv.imgcodecs'
@@ -83,6 +85,7 @@ while true do
 		end
 
 		Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
+		Imgcuda = Img:cuda()
 
 		fgMaskMOG2 = pMOG2:apply{frame}
 		Mask = 	torch.ByteTensor(fgMaskMOG2:size()[1],fgMaskMOG2:size()[2]):copy(fgMaskMOG2)
@@ -122,9 +125,9 @@ while true do
 			y = keypoints.data[k].pt.y
 			if y+L/2-1<width and y-L/2>0 and x-l/2>0 and x+l/2-1<length then
 				cv.rectangle{Img, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {255,255,255}}
-				sub = torch.Tensor(1,L,l):copy(Img:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1))
+				sub = torch.CudaTensor(1,L,l):copy(Imgcuda:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1))
 				predicted = net:forward(sub:view(1,L,l))
-				if predicted[1]>0.9 then
+				if predicted[1]==1 then
 					cv.rectangle{frame, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {0,255,0}}
 				end
 			end
