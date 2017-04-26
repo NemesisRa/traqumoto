@@ -14,8 +14,8 @@ local seuil = 0.999999	-- seuil pour comparer au résultat de la prédiction
 
 local net = torch.load('network.t7')	-- Chargement du fichier du réseau
 
-print('Détails ? (y or n)')
-local key = io.read()
+print('Détails ? (y or n)')		-- Demande des détails
+local key = io.read()			-- Lecture de la réponse
 
 if key == 'y' or key == 'n' then
 	local cpt=0
