@@ -12,7 +12,7 @@ require 'cv.videoio'
 require 'cv.imgproc'
 require 'cv.video'
 
-nt = 1
+nt = 10
 n1 = 140
 n2 = 500
 N = n1 + n2
@@ -20,7 +20,7 @@ l = 60
 L = 120
 
 net = torch.load('network.t7')
-vidname = 'Video/aa.avi'
+vidname = 'Video/test2.mp4'
 vid = cv.VideoCapture{vidname}
 
 if not vid:isOpened() then
@@ -48,10 +48,16 @@ cv.namedWindow{'win1'}
 cv.setWindowTitle{'win1', 'N&B'}
 
 cv.namedWindow{'win2'}
-cv.setWindowTitle{'win2', 'Mask'}
+cv.setWindowTitle{'win2', 'BcgSub'}
 
 cv.namedWindow{'win3'}
-cv.setWindowTitle{'win3', 'Couleur'}
+cv.setWindowTitle{'win3', 'Mask'}
+
+cv.namedWindow{'win4'}
+cv.setWindowTitle{'win4', 'Blob'}
+
+cv.namedWindow{'win4'}
+cv.setWindowTitle{'win5', 'Detection'}
 
 local pause = false
 local key = 0
@@ -76,57 +82,61 @@ while true do
 			break
 		end
 
-		fgMaskMOG2 = pMOG2:apply{frame}
+		Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 
-		cv.threshold{fgMaskMOG2, fgMaskMOG2, 100, 255, cv.THRESH_BINARY}
+		fgMaskMOG2 = pMOG2:apply{frame}
+		Mask = 	torch.ByteTensor(fgMaskMOG2:size()[1],fgMaskMOG2:size()[2]):copy(fgMaskMOG2)
+
+		cv.threshold{Mask, Mask, 100, 255, cv.THRESH_BINARY}
 
 		erodeElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{4,4}}
-		cv.erode{fgMaskMOG2,fgMaskMOG2,erodeElement}
+		cv.erode{Mask, Mask, erodeElement}
 		dilateElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{6,6}}
-		cv.dilate{fgMaskMOG2,fgMaskMOG2,dilateElement}
---
-				
+		cv.dilate{Mask, Mask, dilateElement}				
 
-		Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
-		for i=L/2+1,width-L/2,5 do
-			--print(string.format('[%2.0f', i/(width-L/2)*100)..'%] Prédiction de l\'image')
-			for j=l/2+1,length-l/2,5 do
-				if fgMaskMOG2[i][j] > 250 then
-					m=0
-					for k=-5,5 do
-						for l=-4,4 do
-							m=m+fgMaskMOG2[i+k][j+l]
-						end
-					end
-					m=m/99
-					if m>250 then
-						m = 0
-						n = 0
-						for k=-L/4,L/4 do
-							m=m+fgMaskMOG2[i+k][j-25]
-							n=n+fgMaskMOG2[i+k][j+25]
-						end
-						m=m/(L/2+1)
-						n=n/(L/2+1)
-						if m<70 and n<70 then 
-							cv.rectangle{Img, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,255}}
-							sub = torch.Tensor(1,L,l):copy(Img:sub(i-L/2,i+L/2-1,j-l/2,j+l/2-1))
-							predicted = net:forward(sub:view(1,L,l))
-							--predicted = predicted:exp()
-							if predicted[1]==1 then
-								cv.rectangle{frame, pt1={j-l/2, i-L/2}, pt2={j+l/2-1, i+L/2-1}, color = {0,255,0}}
-							--print(m)				
-							end
-						end
-					end
+		Mask=Mask:apply(function(x)
+				x=255-x
+				return x
+			end)
+		
+		params = cv.SimpleBlobDetector_Params{}
+		-- Change thresholds
+		params.minThreshold = 0
+		params.maxThreshold = 255
+		-- Filter by Area.
+		params.filterByArea = true
+		params.minArea = 500
+		params.maxArea = 10000000000000
+		-- Filter by Circularity
+		params.filterByCircularity = false
+		-- Filter by Convexity
+		params.filterByConvexity = false
+		-- Filter by Inertia
+		params.filterByInertia = false
+		detector = cv.SimpleBlobDetector{params}
+		keypoints = detector:detect{Mask}
+		ImgBlob = cv.drawKeypoints{Mask, keypoints}
+
+		for k=1,keypoints.size do
+			x = keypoints.data[k].pt.x
+			y = keypoints.data[k].pt.y
+			if y+L/2-1<width and y-L/2>0 and x-l/2>0 and x+l/2-1<length then
+				cv.rectangle{Img, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {255,255,255}}
+				sub = torch.Tensor(1,L,l):copy(Img:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1))
+				predicted = net:forward(sub:view(1,L,l))
+				if predicted[1]>0.9 then
+					cv.rectangle{frame, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {0,255,0}}
 				end
 			end
 		end
+
 		cv.imshow{'win1', Img}			
 		cv.imshow{'win2', fgMaskMOG2}
-		cv.imshow{'win3', frame}
-		key=cv.waitKey{1} --en ms	
+		cv.imshow{'win3', Mask}
+		cv.imshow{'win4', ImgBlob}
+		cv.imshow{'win5', frame}
 		
+		key=cv.waitKey{1} --en ms
 	end
 end
 

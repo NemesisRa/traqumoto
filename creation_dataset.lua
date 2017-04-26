@@ -2,8 +2,13 @@ require 'torch'
 require 'image'
 require 'nn'
 require 'trepl'
+cv = require 'cv'
+require 'cv.features2d'
+require 'cv.imgcodecs'
+require 'cv.highgui'
+require 'cv.imgproc'
 
-nt = 1
+nt = 10
 n1 = 140
 n2 = 500
 N = n1 + n2
@@ -37,81 +42,61 @@ for i = 1,N do
 			labelset[j] = 0
 		end
 	end
-	Img = image.load(imgname,1,'byte')
-	r_image = image.scale(Img, l, L)
-	imgset[k] = torch.Tensor(1,L,l):copy(r_image)
-	k = k+1
-	--[[for t=5,15,5 do
-		Imgloc = image.rotate(r_image, t*math.pi/180)
-		imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-		k = k+1
-		Imgloc = image.rotate(r_image, t*-1*math.pi/180)
-		imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-		k = k+1
+	Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
+	Imgr = cv.resize{Img,{l,L}}
+
+	Imgs1 = torch.ByteTensor(Imgr:size()[1],Imgr:size()[2]):copy(Imgr)
+	Imgs2 = torch.ByteTensor(Imgr:size()[1],Imgr:size()[2]):copy(Imgr)
+	for i=6,Imgr:size()[1] do
+		Imgs1[i-5]=Imgr[i]:copy(Imgr[i])
+		Imgs2[i]=Imgr[i-5]:copy(Imgr[i-5])
 	end
-
-	Imgloc = r_image:apply(function(x)
-	  x = math.max(x - 25,0)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-	k = k+1
-	Imgloc = r_image:apply(function(x)
-	  x = math.max(x - 50,0)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-	k = k+1
-	Imgloc = r_image:apply(function(x)
-	  x = math.min(x + 50,255)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-	k = k+1
-	Imgloc = r_image:apply(function(x)
-	  x = math.min(x + 100,255)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-	k = k+1
-
-
-	r_image = image.hflip(r_image)
-	imgset[k] = torch.Tensor(1,L,l):copy(r_image)
-	k = k+1
-	for t=5,15,5 do
-		Imgloc = image.rotate(r_image, t*math.pi/180)
-		imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-		k = k+1
-		Imgloc = image.rotate(r_image, t*-1*math.pi/180)
-		imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-		k = k+1
+	Imgs3 = torch.ByteTensor(Imgr:size()[1],Imgr:size()[2]):copy(Imgr)
+	Imgs4 = torch.ByteTensor(Imgr:size()[1],Imgr:size()[2]):copy(Imgr)
+	for j=3,Imgr:size()[2] do
+		for i=1,Imgr:size()[1] do
+			Imgs3[i][j-2]=Imgr[i][j]
+			Imgs4[i][j]=Imgr[i][j-2]
+		end
 	end
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgr)
+	k = k+1
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs1)
+	k = k+1
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs2)
+	k = k+1
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs3)
+	k = k+1
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs4)
+	k = k+1
 
-	Imgloc = r_image:apply(function(x)
-	  x = math.max(x - 25,0)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
+	Imgf = torch.ByteTensor(Imgr:size()[1],Imgr:size()[2]):copy(Imgr)
+	cv.flip{Imgr,Imgf,1}
+
+	Imgs1 = torch.ByteTensor(Imgf:size()[1],Imgf:size()[2]):copy(Imgf)
+	Imgs2 = torch.ByteTensor(Imgf:size()[1],Imgf:size()[2]):copy(Imgf)
+	for i=6,Imgf:size()[1] do
+		Imgs1[i-5]=Imgf[i]:copy(Imgf[i])
+		Imgs2[i]=Imgf[i-5]:copy(Imgf[i-5])
+	end
+	Imgs3 = torch.ByteTensor(Imgf:size()[1],Imgf:size()[2]):copy(Imgf)
+	Imgs4 = torch.ByteTensor(Imgf:size()[1],Imgf:size()[2]):copy(Imgf)
+	for j=3,Imgf:size()[2] do
+		for i=1,Imgf:size()[1] do
+			Imgs3[i][j-2]=Imgf[i][j]
+			Imgs4[i][j]=Imgf[i][j-2]
+		end
+	end
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgf)
 	k = k+1
-	Imgloc = r_image:apply(function(x)
-	  x = math.max(x - 50,0)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs1)
 	k = k+1
-	Imgloc = r_image:apply(function(x)
-	  x = math.min(x + 50,255)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs2)
 	k = k+1
-	Imgloc = r_image:apply(function(x)
-	  x = math.min(x + 100,255)
-	  return x
-	end)
-	imgset[k] = torch.Tensor(1,L,l):copy(Imgloc)
-	k = k+1]]
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs3)
+	k = k+1
+	imgset[k] = torch.Tensor(1,L,l):copy(Imgs4)
+	k = k+1
 
 	Img = nil
 end

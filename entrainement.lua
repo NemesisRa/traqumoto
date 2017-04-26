@@ -3,7 +3,7 @@ require 'image'
 require 'nn'
 require 'trepl'
 
-nt = 1
+nt = 10
 n1 = 140
 n2 = 500
 N = n1 + n2
