@@ -7,6 +7,8 @@ cv = require 'cv'		-- Utilisation d'OpenCV
 require 'cv.imgproc'		-- Utilisation du module imgproc d'OpenCV
 require 'cv.imgcodecs'		-- Utilisation du module imgcodecs d'OpenCV
 
+filedir = uigetdir()
+
 local l = 60		-- largeur normalisée des images en entrée du réseau de neurone
 local L = 120		-- hauteur normalisée des images en entrée du réseau de neurone
 local Ntest = 100	-- Nombre d'échantillons de tests

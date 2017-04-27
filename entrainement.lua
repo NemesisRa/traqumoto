@@ -1,41 +1,48 @@
+-- Programme d'entrainement du réseau de neurones
+-- Groupe de PI n°4 | 27/04/2017
+
 require 'torch'
-require 'image'
 require 'nn'
-require 'trepl'
 
-nt = 10
-n1 = 212
-n2 = 600
-N = n1 + n2
-l = 60
-L = 120
+local nt = 10
+local n1 = 212
+local n2 = 600
+local N = n1 + n2
+local l = 60
+local L = 120
 
-dataset = torch.load('dataset.t7')
+local dataset = torch.load('dataset.t7')
 
 function dataset:size()
     return N*nt
 end
 
-net = nn.Sequential();  -- make a multi-layer perceptron
-inputs = 1; outputs = 1; -- parameters
+local inputs = 1
+local couche1 = 4
+local couche2 = 16
+local couche3 = 2000
+local outputs = 1
 
-net = nn.Sequential()
-net:add(nn.SpatialConvolution(inputs, 4, 5, 5)) -- 1 input image channels, 3 output channels, 5x5 convolution kernel
-net:add(nn.ReLU())				-- non-linearity 
-net:add(nn.SpatialMaxPooling(2,2,2,2))		-- A max-pooling operation that looks at 2x2 windows and finds the max.
-net:add(nn.SpatialConvolution(4, 16, 5, 5))	-- 6 input image channels, 16 output channels, 5x5 convolution kernel
-net:add(nn.ReLU())				-- non-linearity 
-net:add(nn.SpatialMaxPooling(2,2,2,2))		-- A max-pooling operation that looks at 2x2 windows and finds the max.
-net:add(nn.View(16*27*12))			-- reshapes from a 3D tensor into 1D tensor 
-net:add(nn.Linear(16*27*12, 2000))			-- fully connected layer (matrix multiplication between input and weights)
-net:add(nn.ReLU())				-- non-linearity 
-net:add(nn.Linear(2000, outputs))			-- the number of outputs of the network
-net:add(nn.Sigmoid())			-- converts the output to a log-probability. Useful for classification problems
+local tailleConvolution = 5
+local tailleMaxPooling = 2
 
-criterion = nn.BCECriterion()
+local net = nn.Sequential()
+net:add(nn.SpatialConvolution(inputs,couche1,tailleConvolution,tailleConvolution))			-- Convulution
+net:add(nn.ReLU())											-- Application du ReLU 
+net:add(nn.SpatialMaxPooling(tailleMaxPooling,tailleMaxPooling,tailleMaxPooling,tailleMaxPooling))	-- Max Pooling pour réduire les images
+net:add(nn.SpatialConvolution(couche1,couche2,tailleConvolution,tailleConvolution))			-- 6 input image channels, 16 output channels, 5x5 convolution kernel
+net:add(nn.ReLU())											-- Application du ReLU 
+net:add(nn.SpatialMaxPooling(tailleMaxPooling,tailleMaxPooling,tailleMaxPooling,tailleMaxPooling))	-- Max Pooling pour réduire les images
+net:add(nn.View(couche2*27*12))										-- redimmensionnement en un seul tableau 
+net:add(nn.Linear(couche2*27*12,couche3))								-- Liens entre la deuxième et troisième couche
+net:add(nn.ReLU())											-- Application du ReLU
+net:add(nn.Linear(couche3,outputs))									-- Liens entre la  troisième couche et la couche de sortie
+net:add(nn.Sigmoid())											-- Sigmoid pour que les résultats soient entre 0 et 1
+
+criterion = nn.BCECriterion()				-- Choix du critère d'entrainement, BCE adapté à deux classes
 trainer = nn.StochasticGradient(net, criterion)
 trainer.learningRate = 0.001
 trainer.maxIteration = 50
 trainer:train(dataset)
 
-torch.save('network.t7', net)
+torch.save('network.t7', net)		-- Sauvagarde du réseau de neurone en fichier t7
