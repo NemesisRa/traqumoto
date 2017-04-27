@@ -2,7 +2,6 @@
 -- Groupe de PI n°4 | 27/04/2017
 
 require 'torch'
-require 'trepl'
 cv = require 'cv'
 require 'cv.imgcodecs'
 require 'cv.imgproc'
