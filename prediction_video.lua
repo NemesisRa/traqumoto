@@ -18,7 +18,7 @@ local l = 60
 local L = 120
 
 local net = torch.load('network.t7')
-local vidname = 'Video/test2.mp4'
+local vidname = 'Video/test.avi'
 local vid = cv.VideoCapture{vidname}
 
 if not vid:isOpened() then
@@ -28,7 +28,7 @@ end
 
 
 local pMOG2 = cv.BackgroundSubtractorMOG2{}
-local frame = vid:read{}
+local _, frame = vid:read{}
 for i=1,30 do
 	if not(vid:read{frame}) then
 		break
