@@ -30,7 +30,7 @@ end
 
 
 local pMOG2 = cv.BackgroundSubtractorMOG2{}
-local frame = vid:read{}
+local _, frame = vid:read{}
 for i=1,30 do
 	if not(vid:read{frame}) then
 		break
