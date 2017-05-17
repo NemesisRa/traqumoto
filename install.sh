@@ -70,4 +70,4 @@ luarocks make cv-scm-1.rockspec
 cd ..
 
 # Création de l'exécutable
-luastatic src/prediction_video_compil.lua /home/manuel/torch/build/exe/luajit-rocks/luajit-2.1/libluajit-static.a -I/home/manuel/torch/exe/luajit-rocks/luajit-2.1/src/
+luastatic src/Traqumoto.lua /home/manuel/torch/build/exe/luajit-rocks/luajit-2.1/libluajit-static.a -I/home/manuel/torch/exe/luajit-rocks/luajit-2.1/src/

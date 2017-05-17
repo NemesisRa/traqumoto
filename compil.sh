@@ -1,0 +1,1 @@
+luastatic src/Traqumoto.lua /home/manuel/torch/build/exe/luajit-rocks/luajit-2.1/libluajit-static.a -I/home/manuel/torch/exe/luajit-rocks/luajit-2.1/src/
