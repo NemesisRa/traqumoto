@@ -20,18 +20,18 @@ local k=1
 for i = 1,N do
 	if i <= n1 then
 		if i<100 then
-			imgname = string.format('BDD/Motos/%02d.png', i)	-- images de 01 à 99
+			imgname = string.format('../BDD/Motos/%02d.png', i)	-- images de 01 à 99
 		else
-			imgname = string.format('BDD/Motos/%03d.png', i)	-- images de 100 à 999
+			imgname = string.format('../BDD/Motos/%03d.png', i)	-- images de 100 à 999
 		end
 		for j=k,k+nt-1 do
 			labelset[j] = 1		-- label de moto
 		end
 	else
 		if i-n1<100 then
-			imgname = string.format('BDD/Pas_Motos/%02d.png', i-n1)		--images de 01 à 99
+			imgname = string.format('../BDD/Pas_Motos/%02d.png', i-n1)		--images de 01 à 99
 		else
-			imgname = string.format('BDD/Pas_Motos/%03d.png', i-n1)		-- images de 100 à 999
+			imgname = string.format('../BDD/Pas_Motos/%03d.png', i-n1)		-- images de 100 à 999
 		end
 		for j=k,k+nt-1 do
 			labelset[j] = 0		-- label de pas moto

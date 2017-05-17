@@ -23,9 +23,9 @@ if key == 'y' or key == 'n' then
 	local cpt=0
 	for i = 1,Ntest do
 		if i <100 then
-			imgname = string.format('BDDTest/Motos/%02d.png', i)
+			imgname = string.format('../BDDTest/Motos/%02d.png', i)
 		else
-			imgname = string.format('BDDTest/Motos/%03d.png', i)
+			imgname = string.format('../BDDTest/Motos/%03d.png', i)
 		end
 		local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
 		local Imgr = cv.resize{Img,{l,L}}
