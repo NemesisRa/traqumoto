@@ -14,4 +14,4 @@ require 'cv.video'
 net = torch.load('src/network.t7')
 vidname = 'Video/test2.mp4'
 
-dofile("prediction.lua")
+dofile("src/prediction.lua")
