@@ -100,10 +100,12 @@ printf "\n${CYAN}[Install] sudo make install${NC}\n"
 sudo make install
 printf "\n${CYAN}[Install] cd ..${NC}\n"
 cd ..
+printf "\n${CYAN}[Install] cd ..${NC}\n"
+cd ..
 
 # INSTALL Luarocks
 printf "\n${CYAN}[Install] sudo apt-get install luarocks${NC}\n"
-sudo apt-get install luarocks
+sudo apt-get -y install luarocks
 
 # LINK Torch & OpenCV
 

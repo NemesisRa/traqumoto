@@ -276,7 +276,7 @@ while true do
 	end
 end
 
-table.insert(data,{math.floor(oldtps/60) .. ':00' .. '-' .. math.floor(tps/60) .. ':' .. tps%60,cpt})
+table.insert(data,{math.floor(oldtps/60) .. ':00' .. '-' .. math.floor(tps/60) .. ':' .. string.format('%02d',tps%60),cpt})
 write('../Resultat.csv',data,';')
 
 cv.destroyAllWindows{}
