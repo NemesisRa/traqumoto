@@ -42,7 +42,7 @@ local fps = vid:get{cv.CAP_PROP_FPS}
 local cptframe = 0
 local oldtps = 0
 local tps = 0
-local data ={{'Temps','Nombre de Motos'}}
+data ={{'Temps','Nombre de Motos'}}
 
 local pMOG2 = cv.BackgroundSubtractorMOG2{}
 local _, frame = vid:read{}
@@ -275,6 +275,5 @@ while true do
 end
 
 table.insert(data,{math.floor(oldtps/60) .. ':00' .. '-' .. math.floor(tps/60) .. ':' .. string.format('%02d',tps%60),cpt})
-write('../Resultat.csv',data,';')
 
 cv.destroyAllWindows{}

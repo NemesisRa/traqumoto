@@ -15,3 +15,5 @@ net = torch.load('src/network.t7')
 vidname = 'Video/test2.mp4'
 
 dofile("src/prediction.lua")
+
+write('Resultat.csv',data,';')
