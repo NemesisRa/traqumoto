@@ -12,7 +12,9 @@ require 'cv.imgproc'
 require 'cv.video'
 
 net = torch.load('src/network.t7')
-vidname = 'Video/test2.mp4'
+vidname = getFile()
+vidname = vidname:gsub("\n", "")
+print(vidname)
 
 dofile("src/prediction.lua")
 

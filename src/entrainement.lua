@@ -5,16 +5,16 @@ require 'torch'
 require 'nn'
 
 local nt = 10
-local n1 = 212
-local n2 = 600
-local N = n1 + n2
+local n1app = 380
+local n2app = 700
+local Napp = n1app + n2app
 local l = 60
 local L = 120
 
-local dataset = torch.load('dataset.t7')
+local dataset = torch.load('datasetApp.t7')
 
 function dataset:size()
-    return N*nt
+    return Napp*nt
 end
 
 local inputs = 1
@@ -42,7 +42,7 @@ net:add(nn.Sigmoid())											-- Sigmoid pour que les résultats soient entre 
 criterion = nn.BCECriterion()				-- Choix du critère d'entrainement, BCE adapté à deux classes
 trainer = nn.StochasticGradient(net, criterion)
 trainer.learningRate = 0.001
-trainer.maxIteration = 50
+trainer.maxIteration = 10
 trainer:train(dataset)
 
 torch.save('network.t7', net)		-- Sauvagarde du réseau de neurone en fichier t7
