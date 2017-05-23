@@ -1,6 +1,0 @@
-print("[Main] Prétraitement de la base de donnée")
-dofile("creation_dataset.lua")
-print("[Main] Entrainement du réseau")
-dofile("entrainement.lua")
-print("[Main] Réseau sauvegardé")
-print("[Main] Test du réseau")

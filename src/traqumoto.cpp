@@ -49,7 +49,7 @@ int main ( int argc, char *argv[] )
 	lua_register(L, "getFile", getFile);
 
 	/* run the script */
-	luaL_dofile(L, "src/Traqumoto.lua");
+	luaL_dofile(L, "src/traqumoto.lua");
 
 	/* cleanup Lua */
 	lua_close(L);
