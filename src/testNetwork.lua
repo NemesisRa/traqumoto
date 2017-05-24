@@ -9,7 +9,9 @@ require 'cv.imgcodecs'		-- Utilisation du module imgcodecs d'OpenCV
 
 local l = 60		-- largeur normalisée des images en entrée du réseau de neurone
 local L = 120		-- hauteur normalisée des images en entrée du réseau de neurone
-local Ntest = 120	-- Nombre d'échantillons de tests
+local n1test = 280
+local n2test = 320
+local Ntest = n1test + n2test	-- Nombre d'échantillons de tests
 local seuil = 0.9999	-- seuil pour comparer au résultat de la prédiction
 
 local net = torch.load('network.t7')	-- Chargement du fichier du réseau
@@ -19,26 +21,29 @@ print('Détails ? (y or n)')		-- Demande des détails
 local key = io.read()			-- Lecture de la réponse
 
 if key == 'y' or key == 'n' then
-	local cpt=0
+	local cptVP = 0
+	local cptFN = 0
 	for i = 1,Ntest do
 		local predicted = net:forward(datasetTest[i][1])
 		if datasetTest[i][2]==1 then
 			if predicted[1] >= seuil then
-				cpt = cpt + 1
+				cptVP = cptVP + 1
 			end
 		else
 			if predicted[1] < seuil then
-				cpt = cpt + 1
+				cptFN = cptFN + 1
 			end
 		end
 		if key == 'y' then
 			print('n°' .. i)
 			print('pred = ' .. predicted[1])
-			print('cpt = ' .. cpt)
+			print('cptVP = ' .. cptVP)
+			print('cptFN = ' .. cptFN)
 			print('\n')
 		end
 	end
-	print('[Résultat] ' .. cpt/Ntest*100 .. '% de bonne prédictions pour le seuil de ' .. seuil)
+	print('[Résultat] ' .. cptVP/Ntest*100 .. '% de Vrai-Positifs pour le seuil de ' .. seuil)
+	print('[Résultat] ' .. cptFN/Ntest*100 .. '% de Faux-Negatifs pour le seuil de ' .. seuil)
 else
 	print('Mauvaise entrée')
 end
