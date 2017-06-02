@@ -10,14 +10,14 @@ require 'cv.imgproc'
 local n1 = 1300		-- Nombre d'images de motos
 local n2 = 1800		-- Nombre d'images de pas motos
 local N = n1 + n2	-- Nombre total d'images
-local n1app = 1200
-local n2app = 1700
+local n1app = 50
+local n2app = 50
 local Napp = n1app + n2app
 local n1test = n1 - n1app
 local n2test = n2 - n2app
 local Ntest = n1test + n2test
 
-local nbiterations = 1
+local nbiterations = 5
 
 local nt = 10
 local l = 60		-- largeur normalisée des images en entrée du réseau de neurone
@@ -271,7 +271,7 @@ for i=1,nbTests do
 		meilleurNet[2] = r1
 		meilleurNet[3] = r2
 	else
-		if meilleurNet[2]>r1 and meilleurNet[3]>r2 then
+		if r1 + r2 > meilleurNet[2] + meilleurNet[3] then
 			meilleurNet[1] = net
 			meilleurNet[2] = r1
 			meilleurNet[3] = r2
