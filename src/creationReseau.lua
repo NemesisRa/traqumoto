@@ -7,11 +7,11 @@ cv = require 'cv'
 require 'cv.imgcodecs'
 require 'cv.imgproc'
 
-local n1 = 480		-- Nombre d'images de motos
-local n2 = 720		-- Nombre d'images de pas motos
+local n1 = 1300		-- Nombre d'images de motos
+local n2 = 1800		-- Nombre d'images de pas motos
 local N = n1 + n2	-- Nombre total d'images
-local n1app = 200
-local n2app = 400
+local n1app = 1200
+local n2app = 1700
 local Napp = n1app + n2app
 local n1test = n1 - n1app
 local n2test = n2 - n2app
@@ -33,7 +33,11 @@ function creation_dataset()
 			if i<100 then
 				imgname = string.format('../BDD/Motos/%02d.png', i)	-- images de 01 à 99
 			else
-				imgname = string.format('../BDD/Motos/%03d.png', i)	-- images de 100 à 999
+				if i<1000 then
+					imgname = string.format('../BDD/Motos/%03d.png', i)	-- images de 100 à 999
+				else
+					imgname = string.format('../BDD/Motos/%04d.png', i)	-- images de 1000 à 9999
+				end
 			end
 			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
 			local Imgr = cv.resize{Img,{l,L}}
@@ -42,7 +46,11 @@ function creation_dataset()
 			if i-n1<100 then
 				imgname = string.format('../BDD/Pas_Motos/%02d.png', i-n1)		--images de 01 à 99
 			else
-				imgname = string.format('../BDD/Pas_Motos/%03d.png', i-n1)		-- images de 100 à 999
+				if i-n1<1000 then
+					imgname = string.format('../BDD/Pas_Motos/%03d.png', i-n1)		-- images de 100 à 999
+				else
+					imgname = string.format('../BDD/Pas_Motos/%04d.png', i-n1)		-- images de 1000 à 9999
+				end
 			end
 			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
 			local Imgr = cv.resize{Img,{l,L}}
