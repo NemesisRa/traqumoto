@@ -7,21 +7,22 @@ cv = require 'cv'
 require 'cv.imgcodecs'
 require 'cv.imgproc'
 
-local n1 = 1300		-- Nombre d'images de motos
-local n2 = 1800		-- Nombre d'images de pas motos
-local N = n1 + n2	-- Nombre total d'images
-local n1app = 50
-local n2app = 50
-local Napp = n1app + n2app
-local n1test = n1 - n1app
-local n2test = n2 - n2app
-local Ntest = n1test + n2test
+local n1 = 1300			-- Nombre d'images de motos
+local n2 = 1800			-- Nombre d'images de pas motos
+local N = n1 + n2		-- Nombre total d'images
+local n1app = 100		-- Nombre d'images de motos pour l'apprentissage
+local n2app = 100		-- Nombre d'images de pas motos pour l'apprentissage
+local Napp = n1app + n2app	-- Nombre total d'images pour l'apprentissage
+local n1test = n1 - n1app	-- Nombre d'images de motos pour le test
+local n2test = n2 - n2app	-- Nombre d'images de pas motos pour le test
+local Ntest = n1test + n2test	-- Nombre total d'images pour le test
 
-local nbiterations = 5
+local nbiterations = 20		-- nombre d'itérations
+local seuil = 1			-- seuil pour comparer au résultat de la prédiction (moto=1, pasmoto=0)
 
-local nt = 10
-local l = 60		-- largeur normalisée des images en entrée du réseau de neurone
-local L = 120		-- hauteur normalisée des images en entrée du réseau de neurone
+local nt = 10	-- nombre de transformations
+local l = 60	-- largeur normalisée des images en entrée du réseau de neurone
+local L = 120	-- hauteur normalisée des images en entrée du réseau de neurone
 
 function creation_dataset()
 	local imgsetMoto = torch.Tensor(n1,1,L,l):zero()
@@ -192,17 +193,18 @@ function entrainement(dataset)
 		return Napp*nt
 	end
 
-	local inputs = 1
-	local couche1 = 4
-	local couche2 = 16
-	local couche3 = 2000
-	local outputs = 1
+	local inputs = 1	-- une image en entrée du réseau
+	local couche1 = 4	-- taille des couche intermédiaires(4, 16, 2000)
+	local couche2 = 16	
+	local couche3 = 2000	
+	local outputs = 1	-- une prédiction en sortie du reseau (probabilité entre 0 et 1)
+
 
 	local tailleConvolution = 5
 	local tailleMaxPooling = 2
 
 	local net = nn.Sequential()
-	net:add(nn.SpatialConvolution(inputs,couche1,tailleConvolution,tailleConvolution))			-- Convulution
+	net:add(nn.SpatialConvolution(inputs,couche1,tailleConvolution,tailleConvolution))			-- Convolution
 	net:add(nn.ReLU())											-- Application du ReLU 
 	net:add(nn.SpatialMaxPooling(tailleMaxPooling,tailleMaxPooling,tailleMaxPooling,tailleMaxPooling))	-- Max Pooling pour réduire les images
 	net:add(nn.SpatialConvolution(couche1,couche2,tailleConvolution,tailleConvolution))			-- 6 input image channels, 16 output channels, 5x5 convolution kernel
@@ -216,9 +218,10 @@ function entrainement(dataset)
 
 	criterion = nn.BCECriterion()				-- Choix du critère d'entrainement, BCE adapté à deux classes
 	trainer = nn.StochasticGradient(net, criterion)
-	trainer.learningRate = 0.001
-	trainer.maxIteration = nbiterations
-	trainer:train(dataset)
+	trainer.learningRate = 0.0005		-- paramètre vitesse d'apprentissage
+	trainer.maxIteration = nbiterations	-- paramètre nombre d'itérations
+	trainer:train(dataset)			-- lance l'entrainement du reseau de neurones avec la base de données
+
 	return net
 end
 
@@ -242,7 +245,7 @@ function testNetwork(net,datasetTest,seuil)
 	return cptVP/n1test*100, cptFN/n2test*100
 end
 
-nbTests = 10
+nbTests = 10	-- nombre de tests
 
 print("[Main] " .. nbTests .. " tests vont être fait sur ces paramètres")
 

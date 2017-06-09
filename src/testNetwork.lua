@@ -2,7 +2,7 @@
 -- Groupe de PI n°4 | 26/04/2017
 
 require 'torch'			-- Utilisation du module torch
-require 'nn'			-- Utilisation du mosule neural network
+require 'nn'			-- Utilisation du module neural network
 cv = require 'cv'		-- Utilisation d'OpenCV
 require 'cv.imgproc'		-- Utilisation du module imgproc d'OpenCV
 require 'cv.imgcodecs'		-- Utilisation du module imgcodecs d'OpenCV
@@ -12,10 +12,10 @@ local L = 120		-- hauteur normalisée des images en entrée du réseau de neuron
 local n1test = 280
 local n2test = 320
 local Ntest = n1test + n2test	-- Nombre d'échantillons de tests
-local seuil = 0.9999	-- seuil pour comparer au résultat de la prédiction
+local seuil = 1			-- seuil pour comparer au résultat de la prédiction (moto=1, pasmoto=0)
 
 local net = torch.load('network.t7')	-- Chargement du fichier du réseau
-local datasetTest = torch.load('datasetTest.t7')
+local datasetTest = torch.load('datasetTest.t7') -- Chargement du fichier de la base de données
 
 print('Détails ? (y or n)')		-- Demande des détails
 local key = io.read()			-- Lecture de la réponse

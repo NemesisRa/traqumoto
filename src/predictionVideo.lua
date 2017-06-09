@@ -12,7 +12,7 @@ require 'cv.imgproc'
 require 'cv.video'
 
 net = torch.load('network.t7')
-vidname = '../Video/test2.mp4'
+vidname = '/home/pi2017/Bureau/Video/test.avi'
 
 dofile("prediction.lua")
 
