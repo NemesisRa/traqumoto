@@ -162,7 +162,7 @@ while true do
 					NPredicted = NPredicted + 1
 					CoordPredicted[NPredicted][1] = x
 					CoordPredicted[NPredicted][2] = y
-					-- dessine 2 rectangles verts sur la moto
+					-- dessine 2 rectangles verts sur la moto predite
 					cv.rectangle{frame, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {0,255,0}}
 					cv.rectangle{frame, pt1={x-2, y-2}, pt2={x+2, y+2}, color = {0,255,0}}
 				end
@@ -204,11 +204,11 @@ while true do
 		end
 
 		for j=1,NTrack do
-			if not(Coordchange[i]) then	-- si les coordonnées n'ont pas été actualisées
+			if not(Coordchange[i]) then	-- si les coordonnées n'ont pas été actualisées, on effectue une prediction à l'emplacement du tracker
 				if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 					local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(CoordTrack[j][2]-L/2,CoordTrack[j][2]+L/2-1,CoordTrack[j][1]-l/2,CoordTrack[j][1]+l/2-1))
 					local predicted = net:forward(sub:view(1,L,l))
-					if predicted[1]==1 then
+					if predicted[1]==1 then	-- dessine un rectangle bleu sur la moto traquee
 						cv.rectangle{frame, pt1={CoordTrack[j][1]-2, CoordTrack[j][2]-2}, pt2={CoordTrack[j][1]+2, CoordTrack[j][2]+2}, color = {0,255,0}}
 						CoordTrack[j][3] = CoordTrack[j][3] + 1
 					end
@@ -216,7 +216,7 @@ while true do
 			end
 		end
 
-		local j = 1
+		local j = 1	-- permet d'effacer les doublons
 		while j<=NTrack and j>0 do
 			local k = 1
 			while k<=NTrack and k>0 and j>0 do
@@ -234,15 +234,15 @@ while true do
 		end
 
 		j=1
-		while j<=NTrack and j>0 do
+		while j<=NTrack and j>0 do	-- tous les trackers avancent de Vtrack pixels s'ils ne dépassent pas de l'image
 			if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 				cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2, CoordTrack[j][2]-L/2}, pt2={CoordTrack[j][1]+l/2-1, CoordTrack[j][2]+L/2-1}, color = {0,0,255}}
 				CoordTrack[j][2] = CoordTrack[j][2]+VTrack
-			else
-				if CoordTrack[j][3] > 5 then
+			else	-- si hors cadre
+				if CoordTrack[j][3] > 5 then	-- om compte la moto si le compteur > 5
 					cpt = cpt+1
 					cptglb = cptglb+1
-				end
+				end	-- supprime les données de la moto
 				table.remove(CoordTrack,j)
 				NTrack = NTrack-1
 				j = j-1
@@ -250,10 +250,10 @@ while true do
 			j = j+1
 		end
 
-		if cptframe>=fps then
+		if cptframe>=fps then	-- calcul du temps via compteur de frame
 			cptframe = 0
 			tps = tps + 1
-			if tps%(6*60)==0 and tps~=0 then
+			if tps%(6*60)==0 and tps~=0 then	-- découpage par tranche de 6 minutes
 				table.insert(data,{math.floor(oldtps/60) .. ':00' .. '-' .. math.floor(tps/60) .. ':00',cpt})
 				oldtps = tps
 				cpt = 0
