@@ -17,8 +17,7 @@ local n1test = n1 - n1app	-- Nombre d'images de motos pour le test
 local n2test = n2 - n2app	-- Nombre d'images de pas motos pour le test
 local Ntest = n1test + n2test	-- Nombre total d'images pour le test
 
-local nbiterations = 20		-- nombre d'itérations
-local seuil = 1			-- seuil pour comparer au résultat de la prédiction (moto=1, pasmoto=0)
+local nbiterations = 100	-- nombre d'itérations
 
 local nt = 10	-- nombre de transformations
 local l = 60	-- largeur normalisée des images en entrée du réseau de neurone
