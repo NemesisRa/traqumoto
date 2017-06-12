@@ -2,7 +2,7 @@
 -- Groupe de PI n°4 | 23/05/2017
 
 --[[ Ce programme crée la base de données constituée de 10 (transformations) * Napp images.
-Puis le programme crée le réseau de neurones et l'entraine avec la base de données.
+Puis il crée le réseau de neurones et l'entraine avec la base de données.
 Ensuite le programme teste les Ntest images pour évaluer le réseau. ]]
 
 require 'torch'		-- Utilisation du module torch
@@ -19,7 +19,7 @@ local n2app = 1700		-- Nombre d'images de pas motos pour l'apprentissage
 local Napp = n1app + n2app	-- Nombre total d'images pour l'apprentissage
 local n1test = n1 - n1app	-- Nombre d'images de motos pour le test
 local n2test = n2 - n2app	-- Nombre d'images de pas motos pour le test
-local Ntest = n1test + n2test	-- Nombre total d'images pour le test
+local Ntest = n1test + n2test	-- Nombre d'échantillons de tests
 
 local nbiterations = 10 -- nombre d'itérations
 local seuil = 1		-- seuil pour comparer au résultat de la prédiction (moto=1, pasmoto=0)
@@ -30,8 +30,8 @@ local L = 120	-- hauteur normalisée des images en entrée du réseau de neurone
 
 -- Creation de la base de données d'images
 function creation_dataset()
-	local imgsetMoto = torch.Tensor(n1,1,L,l):zero() -- tableau contenant les images de motos
-	local imgsetPasMoto = torch.Tensor(n2,1,L,l):zero() -- tableau contenant les images de pas motos
+	local imgsetMoto = torch.Tensor(n1,1,L,l):zero() 	-- tableau contenant les images de motos
+	local imgsetPasMoto = torch.Tensor(n2,1,L,l):zero() 	-- tableau contenant les images de pas motos
 
 	for i=1,N do
 		if i <= n1 then
@@ -44,9 +44,9 @@ function creation_dataset()
 					imgname = string.format('../BDD/Motos/%04d.png', i)	-- images de 1000 à 9999
 				end
 			end
-			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE} -- image en niveau de gris
-			local Imgr = cv.resize{Img,{l,L}} 	-- redimensionnement 60x120
-			imgsetMoto[i] = torch.Tensor(1,L,l):copy(Imgr) -- ajout image moto dans tableau de motos
+			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE} 	-- image en niveau de gris
+			local Imgr = cv.resize{Img,{l,L}} 			-- redimensionnement 60x120
+			imgsetMoto[i] = torch.Tensor(1,L,l):copy(Imgr) 		-- ajout image moto dans tableau de motos
 		else
 			if i-n1<100 then
 				imgname = string.format('../BDD/Pas_Motos/%02d.png', i-n1)		--images de 01 à 99
@@ -249,14 +249,14 @@ function testNetwork(net,datasetTest,seuil)
 	local cptVP=0 -- compteur Vrai Postif (signifie moto vue comme moto par le reseau)
 	local cptFN=0 -- compteur Faux Negatif (signifie pas moto vue comme pas moto par le reseau)
 	for i = 1,Ntest do
-		local predicted = net:forward(datasetTest[i][1])
+		local predicted = net:forward(datasetTest[i][1]) -- prediction de l'echantillon
 		if datasetTest[i][2]==1 then 		-- si l'image est une moto
-			if predicted[1] >= seuil then 	-- et si la prediction du reseau est >= au seuil (ie bonne prediction)
-				cptVP = cptVP + 1
+			if predicted[1] >= seuil then 	-- si la prediction du reseau est >= au seuil 
+				cptVP = cptVP + 1	-- bonne prediction donc on incrémente le compteur
 			end
 		else 					-- sinon si l'image est une pas moto
-			if predicted[1] < seuil then 	-- et si la prediction est < au seuil (ie bonne prediction)
-				cptFN = cptFN + 1
+			if predicted[1] < seuil then 	-- et si la prediction est < au seuil
+				cptFN = cptFN + 1	-- bonne prediction donc on incrémente le compteur
 			end
 		end
 	end
@@ -271,7 +271,7 @@ print("[Main] Prétraitement et entrainement du réseau de neurones")
 local tps = os.time()
 net = entrainement(datasetApp)
 print("[Main] Réseau sauvegardé")
-tps = (os.time() - tps)
+tps = (os.time() - tps)	-- durée de l'entrainement
 print("[Main] Temps d'entrainement : " .. math.floor(tps/86400) .. "d " .. math.floor(tps/3600)%86400 .. "h " .. math.floor(tps/60)%60 .. "m " .. tps%60 .. "s")
 print("[Main] Test du réseau")
 testNetwork(net,datasetTest,seuil)

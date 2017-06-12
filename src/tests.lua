@@ -1,17 +1,17 @@
 -- Programme de création du réseau de neuronne ainsi que l'entrainement
 -- Groupe de PI n°4 | 23/05/2017
 
-require 'torch'
-require 'nn'
-cv = require 'cv'
-require 'cv.imgcodecs'
-require 'cv.imgproc'
+require 'torch'		-- Utilisation du module torch
+require 'nn'		-- Utilisation du module neural network
+cv = require 'cv'	-- Utilisation d'OpenCV
+require 'cv.imgcodecs'	-- Utilisation du module imgcodecs d'OpenCV
+require 'cv.imgproc'	-- Utilisation du module imgproc d'OpenCV
 
 local n1 = 1300			-- Nombre d'images de motos
 local n2 = 1800			-- Nombre d'images de pas motos
 local N = n1 + n2		-- Nombre total d'images
-local n1app = 100		-- Nombre d'images de motos pour l'apprentissage
-local n2app = 100		-- Nombre d'images de pas motos pour l'apprentissage
+local n1app = 200		-- Nombre d'images de motos pour l'apprentissage
+local n2app = 200		-- Nombre d'images de pas motos pour l'apprentissage
 local Napp = n1app + n2app	-- Nombre total d'images pour l'apprentissage
 local n1test = n1 - n1app	-- Nombre d'images de motos pour le test
 local n2test = n2 - n2app	-- Nombre d'images de pas motos pour le test
@@ -24,9 +24,10 @@ local nt = 10	-- nombre de transformations
 local l = 60	-- largeur normalisée des images en entrée du réseau de neurone
 local L = 120	-- hauteur normalisée des images en entrée du réseau de neurone
 
+-- Creation de la base de données d'images
 function creation_dataset()
-	local imgsetMoto = torch.Tensor(n1,1,L,l):zero()
-	local imgsetPasMoto = torch.Tensor(n2,1,L,l):zero()
+	local imgsetMoto = torch.Tensor(n1,1,L,l):zero() 	-- tableau contenant les images de motos
+	local imgsetPasMoto = torch.Tensor(n2,1,L,l):zero() 	-- tableau contenant les images de pas
 
 	for i=1,N do
 		if i <= n1 then
@@ -39,9 +40,9 @@ function creation_dataset()
 					imgname = string.format('../BDD/Motos/%04d.png', i)	-- images de 1000 à 9999
 				end
 			end
-			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
-			local Imgr = cv.resize{Img,{l,L}}
-			imgsetMoto[i] = torch.Tensor(1,L,l):copy(Imgr)
+			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE} 	-- image en niveau de gris
+			local Imgr = cv.resize{Img,{l,L}} 			-- redimensionnement 60x120
+			imgsetMoto[i] = torch.Tensor(1,L,l):copy(Imgr) 		-- ajout image moto dans tableau de motos
 		else
 			if i-n1<100 then
 				imgname = string.format('../BDD/Pas_Motos/%02d.png', i-n1)		--images de 01 à 99
@@ -52,12 +53,13 @@ function creation_dataset()
 					imgname = string.format('../BDD/Pas_Motos/%04d.png', i-n1)		-- images de 1000 à 9999
 				end
 			end
-			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}
-			local Imgr = cv.resize{Img,{l,L}}
-			imgsetPasMoto[i-n1] = torch.Tensor(1,L,l):copy(Imgr)
+			local Img = cv.imread{imgname,cv.IMREAD_GRAYSCALE}	-- image en niveau de gris
+			local Imgr = cv.resize{Img,{l,L}}			-- redimensionnement 60x120
+			imgsetPasMoto[i-n1] = torch.Tensor(1,L,l):copy(Imgr) 	-- ajout image moto dans tableau de motos
 		end
 	end
-
+	
+	-- associe le label de moto à 1
 	local dataMoto = {}
 	for i=1,n1 do
 	  local input = imgsetMoto[i]
@@ -65,6 +67,7 @@ function creation_dataset()
 	  dataMoto[i] = {input, target}
 	end
 
+	-- associe le label de pas moto à 0
 	local dataPasMoto = {}
 	for i=1,n2 do
 	  local input = imgsetPasMoto[i]
@@ -72,24 +75,27 @@ function creation_dataset()
 	  dataPasMoto[i] = {input, target}
 	end
 
-	local rand1 = torch.randperm(n1)
-	local rand2 = torch.randperm(n2)
+	local rand1 = torch.randperm(n1) -- génération d'une permutation aléatoire de taille n1
+	local rand2 = torch.randperm(n2) -- génération d'une permutation aléatoire de taille n2
 
+	-- change l'ordre du tableau dataMotoRand avec la permutation précédente
 	local dataMotoRand = {}
 	for i=1,n1 do
-	  dataMotoRand[i] = dataMoto[rand1[i]]
+		dataMotoRand[i] = dataMoto[rand1[i]]
 	end
 
+	-- change l'ordre du tableau dataPasMotoRand avec la permutation précédente
 	local dataPasMotoRand = {}
 	for i=1,n2 do
-	  dataPasMotoRand[i] = dataPasMoto[rand2[i]]
+		dataPasMotoRand[i] = dataPasMoto[rand2[i]]
 	end
 
-	local imgsetApp = torch.Tensor(Napp*nt,1,L,l):zero()
-	local labelsetApp = torch.Tensor(Napp*nt,1):zero()
+	local imgsetApp = torch.Tensor(Napp*nt,1,L,l):zero() -- initialisation du tableau des images pour l'apprentissage
+	local labelsetApp = torch.Tensor(Napp*nt,1):zero() -- initialisation du tableau des labels des images
 
 	local k=1
 	for i = 1,Napp do
+	-- Attirbution du label (moto ou pas moto) à chaque image de l'apprentissage dans le tableau labelsetApp
 		if i <= n1app then
 			for j=k,k+nt-1 do
 				labelsetApp[j] = 1		-- label de moto
@@ -102,77 +108,80 @@ function creation_dataset()
 			Imgr = torch.Tensor(1,L,l):copy(dataPasMotoRand[i-n1app][1])
 		end
 
+		-- A partir de chaque image, on obtient 10 images en effectuant des transformations (flip, décalage)
 		local Imgs1 = torch.ByteTensor(1,L,l):copy(Imgr)
 		local Imgs2 = torch.ByteTensor(1,L,l):copy(Imgr)
 		for i=6,Imgr:size()[1] do
-			Imgs1[i-5]=Imgr[i]:copy(Imgr[i])
-			Imgs2[i]=Imgr[i-5]:copy(Imgr[i-5])
+			Imgs1[i-5]=Imgr[i]:copy(Imgr[i]) -- décalage de 5 pixels à gauche
+			Imgs2[i]=Imgr[i-5]:copy(Imgr[i-5]) -- décalage de 5 pixels à droite
 		end
 		local Imgs3 = torch.ByteTensor(1,L,l):copy(Imgr)
 		local Imgs4 = torch.ByteTensor(1,L,l):copy(Imgr)
 		for j=3,Imgr:size()[2] do
 			for i=1,Imgr:size()[1] do
-				Imgs3[i][j-2]=Imgr[i][j]
-				Imgs4[i][j]=Imgr[i][j-2]
+				Imgs3[i][j-2]=Imgr[i][j] -- décalage de 2 pixels en haut
+				Imgs4[i][j]=Imgr[i][j-2] -- décalage de 2 pixels en bas
 			end
 		end
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgr)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgr)	-- image originale
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs1)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs1)	-- droite
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs2)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs2)	-- gauche
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs3)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs3) 	-- haut
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs4)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgs4)	-- bas
 		k = k+1
 
-		local Imgf = torch.ByteTensor(1,L,l):copy(Imgr)
+		local Imgf = torch.ByteTensor(1,L,l):copy(Imgr)		-- image flip
 		cv.flip{Imgr,Imgf,1}
 
-		local Imgfs1 = torch.ByteTensor(1,L,l):copy(Imgf)
+		local Imgfs1 = torch.ByteTensor(1,L,l):copy(Imgf)	
 		local Imgfs2 = torch.ByteTensor(1,L,l):copy(Imgf)
 		for i=6,Imgf:size()[1] do
-			Imgfs1[i-5]=Imgf[i]:copy(Imgf[i])
-			Imgfs2[i]=Imgf[i-5]:copy(Imgf[i-5])
+			Imgfs1[i-5]=Imgf[i]:copy(Imgf[i])	-- flip + décalage de 5 pixels à gauche
+			Imgfs2[i]=Imgf[i-5]:copy(Imgf[i-5])	-- flip + décalage de 5 pixels à droite
 		end
 		local Imgfs3 = torch.ByteTensor(1,L,l):copy(Imgf)
 		local Imgfs4 = torch.ByteTensor(1,L,l):copy(Imgf)
 		for j=3,Imgf:size()[2] do
 			for i=1,Imgf:size()[1] do
-				Imgfs3[i][j-2]=Imgf[i][j]
-				Imgfs4[i][j]=Imgf[i][j-2]
+				Imgfs3[i][j-2]=Imgf[i][j]	-- flip + décalage de 5 pixels en haut
+				Imgfs4[i][j]=Imgf[i][j-2]	-- flip + décalage de 5 pixels en bas
 			end
 		end
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgf)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgf)	-- flip
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs1)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs1)	-- flip droite
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs2)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs2)	-- flip gauche
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs3)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs3)	-- flip haut
 		k = k+1
-		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs4)
+		imgsetApp[k] = torch.Tensor(1,L,l):copy(Imgfs4)	-- flip bas
 		k = k+1
 
 		Img = nil
 	end
 
-	local mean = imgsetApp:mean()
-	local stdv = imgsetApp:std()
-	imgsetApp = imgsetApp:apply(function(x)
+	local mean = imgsetApp:mean() -- moyenne
+	local stdv = imgsetApp:std()  -- ecart-type
+	-- fonction qui met la moyenne des pixels de l'image à 127 avec une répartition uniforme (égalisation des niveaux de gris)
+	imgsetApp = imgsetApp:apply(function(x) 
 			x=x*(42/stdv)-mean+127
 			x = math.max(math.min(x,255),0)
 			return x
 		end)
 
+	-- création de la BDD des images pour l'apprentissage (image, label)
 	local datasetApp = {}
 	for i=1,Napp*nt do
-	  local input = imgsetApp[i]
-	  local target = labelsetApp[i]
-	  datasetApp[i] = {input, target}
+		local input = imgsetApp[i]
+		local target = labelsetApp[i]
+		datasetApp[i] = {input, target}
 	end
-
+	-- création de la BDD des images de Test
 	local datasetTest = {}
 	for i=1,Ntest*nt do
 		if i<=n1test then
@@ -182,15 +191,17 @@ function creation_dataset()
 		end
 	end
 
-	torch.save('datasetApp.t7', datasetApp)		-- Enregistre les datasets
+	-- Enregistre les datasets (BDD d'apprentissage et de test)
+	torch.save('datasetApp.t7', datasetApp)		
 	torch.save('datasetTest.t7', datasetTest)
 	return datasetApp,datasetTest
 end
 
+-- Creation du reseau de neurones et entrainement
 function entrainement(dataset)
 
 	function dataset:size()
-		return Napp*nt
+		return Napp*nt	-- taille BDD (10*Napp)
 	end
 
 	local inputs = 1	-- une image en entrée du réseau
@@ -217,31 +228,33 @@ function entrainement(dataset)
 	net:add(nn.Sigmoid())											-- Sigmoid pour que les résultats soient entre 0 et 1
 
 	criterion = nn.BCECriterion()				-- Choix du critère d'entrainement, BCE adapté à deux classes
-	trainer = nn.StochasticGradient(net, criterion)
-	trainer.learningRate = 0.0005		-- paramètre vitesse d'apprentissage
+	trainer = nn.StochasticGradient(net, criterion)		-- Création de l'entraineur avec le reseau et le critère
+	trainer.learningRate = 0.000001		-- paramètre vitesse d'apprentissage
 	trainer.maxIteration = nbiterations	-- paramètre nombre d'itérations
 	trainer:train(dataset)			-- lance l'entrainement du reseau de neurones avec la base de données
 
 	return net
 end
 
+-- Test du réseau de neurones
+-- Cette fonction permet de tester la précision de la prédiction du réseau de neurones en fonction du seuil choisi, la fonction renvoie le pourcentage de réussite
 function testNetwork(net,datasetTest,seuil)
-	local cptVP=0
-	local cptFN=0
+	local cptVP=0 -- compteur Vrai Postif (signifie moto vue comme moto par le reseau)
+	local cptFN=0 -- compteur Faux Negatif (signifie pas moto vue comme pas moto par le reseau)
 	for i = 1,Ntest do
-		local predicted = net:forward(datasetTest[i][1])
-		if datasetTest[i][2]==1 then
-			if predicted[1] >= seuil then
-				cptVP = cptVP + 1
+		local predicted = net:forward(datasetTest[i][1]) -- prediction de l'echantillon
+		if datasetTest[i][2]==1 then 		-- si l'image est une moto
+			if predicted[1] >= seuil then 	-- si la prediction du reseau est >= au seuil 
+				cptVP = cptVP + 1	-- bonne prediction donc on incrémente le compteur
 			end
-		else
-			if predicted[1] < seuil then
-				cptFN = cptFN + 1
+		else 					-- sinon si l'image est une pas moto
+			if predicted[1] < seuil then 	-- et si la prediction est < au seuil
+				cptFN = cptFN + 1	-- bonne prediction donc on incrémente le compteur
 			end
 		end
 	end
-	print(string.format('[Résultat] %.1f%% de Vrai-Positifs pour le seuil de ', cptVP/n1test*100) .. seuil)
-	print(string.format('[Résultat] %.1f%% de Faux-Négatifs pour le seuil de ', cptFN/n2test*100) .. seuil)
+	print('[Résultat] ' .. cptVP/n1test*100 .. '% de Vrai-Positifs pour le seuil de ' .. seuil)
+	print('[Résultat] ' .. cptFN/n2test*100 .. '% de Faux-Negatifs pour le seuil de ' .. seuil)
 	return cptVP/n1test*100, cptFN/n2test*100
 end
 
@@ -250,13 +263,14 @@ nbTests = 10	-- nombre de tests
 print("[Main] " .. nbTests .. " tests vont être fait sur ces paramètres")
 
 local tpstab = torch.Tensor(nbTests):zero()
-local VP1 = torch.Tensor(nbTests):zero()
-local FN1 = torch.Tensor(nbTests):zero()
-local VP2 = torch.Tensor(nbTests):zero()
-local FN2 = torch.Tensor(nbTests):zero()
-local VP3 = torch.Tensor(nbTests):zero()
-local FN3 = torch.Tensor(nbTests):zero()
-local meilleurNet = {}
+local VP1 = torch.Tensor(nbTests):zero()	-- nombre vrai positif au seuil 1
+local FN1 = torch.Tensor(nbTests):zero()	-- nombre faux negatif au seuil 1
+local VP2 = torch.Tensor(nbTests):zero()	-- nombre vrai positif au seuil 0.9999
+local FN2 = torch.Tensor(nbTests):zero()	-- nombre faux negatif au seuil 0.9999
+local VP3 = torch.Tensor(nbTests):zero()	-- nombre vrai positif au seuil 0.9
+local FN3 = torch.Tensor(nbTests):zero()	-- nombre faux negatif au seuil 0.9
+local meilleurNet = {}				-- permet de selectionner le meilleur réseau
+
 for i=1,nbTests do
 	-- Main
 	print("[Test" .. i .. "] Prétraitement de la base de donnée")
@@ -264,8 +278,8 @@ for i=1,nbTests do
 	print("[Test" .. i .. "] Entrainement du réseau")
 	local tps = os.time()
 	net = entrainement(datasetApp)
-	tps = (os.time() - tps)
-	tpstab[i] = tps
+	tps = (os.time() - tps)	-- durée de l'entrainement
+	tpstab[i] = tps		-- tableau des temps d'entrainement
 	print("[Test" .. i .. "] Temps d'entrainement : " .. math.floor(tps/86400) .. "d " .. math.floor(tps/3600)%86400 .. "h " .. math.floor(tps/60)%60 .. "m " .. tps%60 .. "s")
 	print("[Test" .. i .. "] Test du réseau")
 	r1,r2 = testNetwork(net,datasetTest,1)
@@ -274,12 +288,13 @@ for i=1,nbTests do
 		meilleurNet[2] = r1
 		meilleurNet[3] = r2
 	else
-		if r1 + r2 > meilleurNet[2] + meilleurNet[3] then
+		if r1 + r2 > meilleurNet[2] + meilleurNet[3] then	-- selection du meilleur reseau
 			meilleurNet[1] = net
 			meilleurNet[2] = r1
 			meilleurNet[3] = r2
 		end
 	end
+	-- sauvegarde des résultats des nbTests réseaux dans des tableaux (%VP et %FN pour les seuils 0.9, 0.9999 et 1)
 	VP1[i] = r1
 	FN1[i] = r2
 	r1,r2 = testNetwork(net,datasetTest,0.9999)
@@ -290,14 +305,15 @@ for i=1,nbTests do
 	FN3[i] = r2
 end
 
-torch.save('network.t7', meilleurNet[1])		-- Sauvagarde du meilleur réseau de neurone en fichier t7
+torch.save('network.t7', meilleurNet[1])	-- Sauvagarde du meilleur réseau de neurones en fichier .t7
 print("[Main] Meilleur réseau sauvegardé")
 
-tpsmoy = tpstab:mean()
-tpsstd = tpstab:std()
-moy1VP = VP1:mean()
-std1VP = VP1:std()
-moy1FN = FN1:mean()
+-- Affichage de statistiques sur les nbTests effectués
+tpsmoy = tpstab:mean()	-- temps moyen d'entrainement
+tpsstd = tpstab:std()	-- ecart type du temps d'entrainement
+moy1VP = VP1:mean()	-- moyenne pourcentage de vrai positif au seuil 1
+std1VP = VP1:std()	-- ecart type du pourcentage de vrai positif au seuil 1
+moy1FN = FN1:mean()	-- ...
 std1FN = FN1:std()
 moy2VP = VP2:mean()
 std2VP = VP2:std()

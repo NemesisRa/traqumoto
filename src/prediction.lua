@@ -11,15 +11,16 @@ require 'cv.videoio'	-- Utilisation du module videoio d'OpenCV
 require 'cv.imgproc'	-- Utilisation du module imgproc d'OpenCV
 require 'cv.video'	-- Utilisation du module video d'OpenCV
 
-function write(path, data, sep)
-    sep = sep or ';'
+-- fonction ecrire dans un fichier excel
+function write(path, data, sep)	-- 
+    sep = sep or ';'	-- separateur pour décaler d'une colonne à droite
     local file = assert(io.open(path, "w"))
-    for i=1,#data do
-        for j=1,#data[i] do
+    for i=1,#data do	-- #data = nombre de lignes
+        for j=1,#data[i] do	-- #data[i] = nombre de colonnes
             if j>1 then file:write(sep) end
-            file:write(data[i][j])
+            file:write(data[i][j])	-- data[i][j] = donnée de la case ieme ligne et jeme colonne
         end
-        file:write('\n')
+        file:write('\n') -- separateur pour descendre d'une ligne
     end
     file:close()
 end
@@ -61,7 +62,7 @@ Imgpred = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 
 local CoordTrack = {} 	-- Liste des coordonnées des trackers
 local NTrack = 0	-- Nombre de trackers
-local VTrack = 5	-- Vitesse du traquer
+local VTrack = 5	-- Vitesse du traquer (en pixels/image)
 local TVTab = 5		-- Taille du tableau des 5 dernières vitesses
 local VTab = {}		-- Liste des vitesses des trackers
 for i=1,TVTab do VTab[i] = VTrack end
@@ -113,10 +114,10 @@ while true do
 		local Img = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 		local Imgpred = cv.cvtColor{frame, nil, cv.COLOR_BGR2GRAY}
 
-		local fgMaskMOG2 = pMOG2:apply{frame}
-		local Mask = torch.ByteTensor(fgMaskMOG2:size()[1],fgMaskMOG2:size()[2]):copy(fgMaskMOG2)
+		local fgMaskMOG2 = pMOG2:apply{frame}								-- application du Background Subtractor
+		local Mask = torch.ByteTensor(fgMaskMOG2:size()[1],fgMaskMOG2:size()[2]):copy(fgMaskMOG2)	-- image du Background Subtractor
 
-		cv.threshold{Mask, Mask, 100, 255, cv.THRESH_BINARY} -- pixels entre 0 et 100 =0 noir, pixels entre 100 et 255 =255 blanc
+		cv.threshold{Mask, Mask, 100, 255, cv.THRESH_BINARY} -- pixels entre 0 et 100 =0 (noir), pixels entre 100 et 255 =255 (blanc)
 
 		local erodeElement = cv.getStructuringElement{ cv.MORPH_RECT, cv.Size{4,4}}
 		cv.erode{Mask, Mask, erodeElement}	-- erode pixels blancs de 4 dans la longueur et la largeur
@@ -148,24 +149,24 @@ while true do
 		local keypoints = detector:detect{Mask}			-- liste des coordonnées des centres de blobs
 		local ImgBlob = cv.drawKeypoints{Mask, keypoints}	-- Mask + keypoints
 
-		local CoordPredicted = torch.Tensor(keypoints.size,2):zero() 
+		local CoordPredicted = torch.Tensor(keypoints.size,2):zero() -- liste des coordonnées des centres de blobs
 		local NPredicted = 0	-- nombre de prédictions
 
 		for k=1,keypoints.size do
-			local x = keypoints.data[k].pt.x
+			local x = keypoints.data[k].pt.x	-- coordonnées des points clés
 			local y = keypoints.data[k].pt.y
-			if y+L/2-1<width and y-L/2>1 and x-l/2>1 and x+l/2-1<length then
-				local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1)) 	--
-				local predicted = net:forward(sub:view(1,L,l))					--
+			if y+L/2-1<width and y-L/2>1 and x-l/2>1 and x+l/2-1<length then	-- pour ne pas dépasser du cadre de l'image
+				local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1))	-- ??????
+				local predicted = net:forward(sub:view(1,L,l))					-- prediction de l'echantillon
 				if predicted[1]==1 then								-- si prédiction >= seuil
 					NPredicted = NPredicted + 1
 					CoordPredicted[NPredicted][1] = x
 					CoordPredicted[NPredicted][2] = y
-					-- dessine 2 rectangles verts sur la motos
+					-- dessine 2 rectangles verts sur la moto
 					cv.rectangle{frame, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {0,255,0}}
 					cv.rectangle{frame, pt1={x-2, y-2}, pt2={x+2, y+2}, color = {0,255,0}}
 				end
-				-- dessine un rectangle blanc à chaque prediction
+				-- dessine un rectangle blanc à chaque prediction dans la fenetre en N&B
 				cv.rectangle{Img, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {255,255,255}}
 			end
 		end
@@ -174,33 +175,36 @@ while true do
 		for i=1,NTrack do Coordchange[i] = false end
 
 		for i=1,NPredicted do
-			local new = true
+			local new = true	-- variable nouvelle moto
 			for j=1,NTrack do
-				if math.abs(CoordTrack[j][1]-CoordPredicted[i][1])<30 and math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<30 then
-					new = false
-					if math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<15 then
-						table.remove(VTab,1)
-						table.insert(VTab,math.abs(CoordTrack[j][2]-CoordPredicted[i][2]))
-						m=0
+				-- si la distance entre l'ordonnée de l'ancienne prediction (traker) et le blob actuel < 50
+				-- si la distance entre l'abscisse de l'ancienne prediction et le blob actuel < 30
+				if math.abs(CoordTrack[j][1]-CoordPredicted[i][1])<50 and math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<30 then
+					new = false	-- ce n'est pas une nouvelle moto
+					if math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<15 then	-- si la vitesse (pixel/image) est <15
+						table.remove(VTab,1)					-- on supprime la vitesse la plus ancienne du tableau
+						table.insert(VTab,math.abs(CoordTrack[j][2]-CoordPredicted[i][2]))	-- on y ajoute la vitesse actuelle
+						m=0	-- calcul vitesse moyenne
 						for a=1,TVTab do
 							m=m+VTab[a]
 						end
 						VTrack=m/TVTab
 					end
+					-- Actualisation des coordonnées : copie des coordonnées predites dans tracker
 					CoordTrack[j][1] = CoordPredicted[i][1]
 					CoordTrack[j][2] = CoordPredicted[i][2]
 					CoordTrack[j][3] = CoordTrack[j][3] + 1
 					Coordchange[j] = true
 				end
 			end
-			if new then
+			if new then	-- si nouvelle moto détectée
 				NTrack = NTrack + 1
-				table.insert(CoordTrack,{CoordPredicted[i][1],CoordPredicted[i][2],1})
+				table.insert(CoordTrack,{CoordPredicted[i][1],CoordPredicted[i][2],1})	-- ajoute coordonnées dans le tableau des coordonnées
 			end
 		end
 
 		for j=1,NTrack do
-			if not(Coordchange[i]) then
+			if not(Coordchange[i]) then	-- si les coordonnées n'ont pas été actualisées
 				if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 					local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(CoordTrack[j][2]-L/2,CoordTrack[j][2]+L/2-1,CoordTrack[j][1]-l/2,CoordTrack[j][1]+l/2-1))
 					local predicted = net:forward(sub:view(1,L,l))
@@ -255,7 +259,7 @@ while true do
 				cpt = 0
 			end
 		end
-
+		-- affichage du temps et du compteur de motos en haut de la frame
 		cv.rectangle{frame, pt1={0, 0}, pt2={60, 20}, color = {255,255,255},thickness=-1}
 		cv.putText{frame,string.format('%02d',math.floor(tps/60)) .. ':' .. string.format('%02d',tps%60),{3,16},cv.FONT_HERSHEY_SIMPLEX,0.6,{0,0,0},2}
 		cv.rectangle{frame, pt1={length-290, 0}, pt2={length, 20}, color = {255,255,255},thickness=-1}
@@ -268,8 +272,8 @@ while true do
 		-- affichage des fenetres
 		cv.imshow{'win1', Img}		-- vidéo en niveaux de gris avec prédictions effectuées (rectangles blancs)		
 		cv.imshow{'win2', fgMaskMOG2} 	-- Masque Background Subtractor, fond en noir et pixels en mouvement en blanc
-		cv.imshow{'win3', Mask} 	-- BS + fonctions Eroder et Dilater
-		cv.imshow{'win4', ImgBlob}	-- BS + ED + détection blobs
+		cv.imshow{'win3', Mask} 	-- BS + fonctions Eroder & Dilater
+		cv.imshow{'win4', ImgBlob}	-- BS + E&D + détection blobs
 		cv.imshow{'win5', frame}	-- vidéo avec trackers + compteur + temps 
 		
 		key=cv.waitKey{1} -- temps entre chaque image en ms

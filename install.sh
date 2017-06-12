@@ -1,3 +1,5 @@
+# Installation de Torch, d'OpenCV et de toutes les librairies puis création de l'executable
+
 # Introduction
 
 CYAN='\033[0;36m'
@@ -129,5 +131,5 @@ cd ..
 
 
 # Création de l'exécutable
-printf "\n${CYAN}[Install] th Applications/luastatic/luastatic.lua src/Traqumoto.lua Applications/torch/build/exe/luajit-rocks/luajit-2.1/libluajit-static.a -IApplications/torch/exe/luajit-rocks/luajit-2.1/src/${NC}\n"
-th Applications/luastatic/luastatic.lua src/Traqumoto.lua Applications/torch/build/exe/luajit-rocks/luajit-2.1/libluajit-static.a -IApplications/torch/exe/luajit-rocks/luajit-2.1/src/
+printf "make"
+make

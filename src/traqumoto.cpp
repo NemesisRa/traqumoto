@@ -1,18 +1,21 @@
+/* Ce fichier se lance via l'executable. Le Main initialise Lua, charge les librairies Lua, y ajoute la fonction getFile et execute le fichier traqumoto.lua */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 
 using namespace std;
 
-extern "C" {
+extern "C" {	/* charge les librairies Lua */
 	#include "../Applications/torch/exe/luajit-rocks/luajit-2.1/src/lua.h"
 	#include "../Applications/torch/exe/luajit-rocks/luajit-2.1/src/lualib.h"
 	#include "../Applications/torch/exe/luajit-rocks/luajit-2.1/src/lauxlib.h"
 }
 
-/* the Lua interpreter */
+/* interpreteur */
 lua_State* L;
 
+/* La fonction getFile permet de recupérer la vidéo à traiter */
 static int getFile(lua_State *L)
 {
 
@@ -39,19 +42,19 @@ static int getFile(lua_State *L)
 
 int main ( int argc, char *argv[] )
 {
-	/* initialize Lua */
+	/* initialise Lua */
 	L = lua_open();
 
-	/* load Lua base libraries */
+	/* charge les librairies de base de Lua */
 	luaL_openlibs(L);
 
-	/* register our function */
+	/* enregistre la fonction getFile dans la librairie Lua */
 	lua_register(L, "getFile", getFile);
 
-	/* run the script */
+	/* execute le script */
 	luaL_dofile(L, "src/traqumoto.lua");
 
-	/* cleanup Lua */
+	/* ferme Lua */
 	lua_close(L);
 
 	return 0;
