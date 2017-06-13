@@ -165,8 +165,7 @@ while true do
 					-- dessine cercles rouges sur la moto predite
 					for i=10,26,8 do
 						cv.circle{frame, center={x, y-10}, radius= i, color = {0,0,255},1,8,0}
-					end
-					
+					end	
 				end
 				-- dessine un rectangle blanc à chaque prediction dans la fenetre en N&B
 				cv.rectangle{Img, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {255,255,255}}
@@ -197,10 +196,13 @@ while true do
 					CoordTrack[j][2] = CoordPredicted[i][2]
 					CoordTrack[j][3] = CoordTrack[j][3] + 1
 					Coordchange[j] = true
+					if CoordTrack[j][3] > 5 then	-- cercle bleu indique que la moto sera comptée
+						cv.circle{frame, center={CoordTrack[j][1], CoordTrack[j][2]-10}, radius=5, color = {255,0,0},1,4,0}
+					end
 				end
 			end
 			if new then	-- si nouvelle moto détectée
-				NTrack = NTrack + 1
+				NTrack = NTrack + 1	-- dessine cercle vert sur la moto predite
 				cv.circle{frame, center={CoordPredicted[i][1], CoordPredicted[i][2]-10}, radius= 26, color = {0,255,0},1,8,0}
 				table.insert(CoordTrack,{CoordPredicted[i][1],CoordPredicted[i][2],1})	-- ajoute coordonnées dans le tableau des coordonnées
 			end
@@ -211,8 +213,8 @@ while true do
 				if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 					local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(CoordTrack[j][2]-L/2,CoordTrack[j][2]+L/2-1,CoordTrack[j][1]-l/2,CoordTrack[j][1]+l/2-1))
 					local predicted = net:forward(sub:view(1,L,l))
-					if predicted[1]>0.99 then	-- dessine un rectangle sur la moto traquee
-						cv.circle{frame, center={x, y}, radius= 20, color = {255,0,0},1,8,0}
+					if predicted[1]==1 then	-- dessine un rectangle vert sur la moto traquee
+						cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2, CoordTrack[j][2]-L/2}, pt2={CoordTrack[j][1]+l/2-1, CoordTrack[j][2]+L/2-1}, color = {0,255,0}}
 						CoordTrack[j][3] = CoordTrack[j][3] + 1
 					end
 				end
@@ -241,8 +243,8 @@ while true do
 			if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 				local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(CoordTrack[j][2]-L/2,CoordTrack[j][2]+L/2-1,CoordTrack[j][1]-l/2,CoordTrack[j][1]+l/2-1))
 				local predicted = net:forward(sub:view(1,L,l))
-				if predicted[1]==1 then
-					cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2, CoordTrack[j][2]-L/2}, pt2={CoordTrack[j][1]+l/2-1, CoordTrack[j][2]+L/2-1}, color = {0,255,0}}
+				if predicted[1]>0.9 then
+					cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2-1, CoordTrack[j][2]-L/2-1}, pt2={CoordTrack[j][1]+l/2-1+1, CoordTrack[j][2]+L/2-1+1}, color = {255,0,0}}
 				end
 				CoordTrack[j][2] = CoordTrack[j][2]+VTrack
 			else	-- si hors cadre
