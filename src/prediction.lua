@@ -243,7 +243,7 @@ while true do
 			if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 				local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(CoordTrack[j][2]-L/2,CoordTrack[j][2]+L/2-1,CoordTrack[j][1]-l/2,CoordTrack[j][1]+l/2-1))
 				local predicted = net:forward(sub:view(1,L,l))
-				if predicted[1]>0.9 then
+				if predicted[1]>0.8 then
 					cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2-1, CoordTrack[j][2]-L/2-1}, pt2={CoordTrack[j][1]+l/2-1+1, CoordTrack[j][2]+L/2-1+1}, color = {255,0,0}}
 				end
 				CoordTrack[j][2] = CoordTrack[j][2]+VTrack

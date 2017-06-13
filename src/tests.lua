@@ -228,7 +228,8 @@ function entrainement(dataset)
 
 	criterion = nn.BCECriterion()				-- Choix du critère d'entrainement, BCE adapté à deux classes
 	trainer = nn.StochasticGradient(net, criterion)		-- Création de l'entraineur avec le reseau et le critère
-	trainer.learningRate = 0.000001		-- paramètre vitesse d'apprentissage
+	trainer.learningRate = 0.001		-- paramètre taux d'apprentissage
+	trainer.learningRateDecay = 0.1		-- division du learning rate par 1.1 à chaque itération
 	trainer.maxIteration = nbiterations	-- paramètre nombre d'itérations
 	trainer:train(dataset)			-- lance l'entrainement du reseau de neurones avec la base de données
 
