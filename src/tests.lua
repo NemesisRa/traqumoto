@@ -10,14 +10,14 @@ require 'cv.imgproc'	-- Utilisation du module imgproc d'OpenCV
 local n1 = 1300			-- Nombre d'images de motos
 local n2 = 1800			-- Nombre d'images de pas motos
 local N = n1 + n2		-- Nombre total d'images
-local n1app = 200		-- Nombre d'images de motos pour l'apprentissage
-local n2app = 200		-- Nombre d'images de pas motos pour l'apprentissage
+local n1app = 1000		-- Nombre d'images de motos pour l'apprentissage
+local n2app = 1000		-- Nombre d'images de pas motos pour l'apprentissage
 local Napp = n1app + n2app	-- Nombre total d'images pour l'apprentissage
 local n1test = n1 - n1app	-- Nombre d'images de motos pour le test
 local n2test = n2 - n2app	-- Nombre d'images de pas motos pour le test
 local Ntest = n1test + n2test	-- Nombre total d'images pour le test
 
-local nbiterations = 100	-- nombre d'itérations
+local nbiterations = 10		-- nombre d'itérations
 
 local nt = 10	-- nombre de transformations
 local l = 60	-- largeur normalisée des images en entrée du réseau de neurone
@@ -199,8 +199,18 @@ end
 -- Creation du reseau de neurones et entrainement
 function entrainement(dataset)
 
+	local stop = false	--variable pour arrêter le test
+
 	function dataset:size()
-		return Napp*nt	-- taille BDD (10*Napp)
+		return table.getn(dataset)	-- taille BDD (10*Napp)
+	end
+
+	function testErreur(trainer, it, erreur)	-- fonction pour tester l'erreur, si elle est trop grande, on arrête l'entrainement
+		if erreur>=1 then
+			stop = true
+			trainer.maxIteration = 1
+			print("STOOOOOOOOOOOP!!!!")
+		end
 	end
 
 	local inputs = 1	-- une image en entrée du réseau
@@ -229,11 +239,12 @@ function entrainement(dataset)
 	criterion = nn.BCECriterion()				-- Choix du critère d'entrainement, BCE adapté à deux classes
 	trainer = nn.StochasticGradient(net, criterion)		-- Création de l'entraineur avec le reseau et le critère
 	trainer.learningRate = 0.001		-- paramètre taux d'apprentissage
-	trainer.learningRateDecay = 0.1		-- division du learning rate par 1.1 à chaque itération
+	--trainer.learningRateDecay = 0.1		-- division du learning rate par 1.1 à chaque itération
 	trainer.maxIteration = nbiterations	-- paramètre nombre d'itérations
+	trainer.hookIteration = testErreur	-- fonction testErreur éxécutée à chaque itération
 	trainer:train(dataset)			-- lance l'entrainement du reseau de neurones avec la base de données
 
-	return net
+	return net,stop
 end
 
 -- Test du réseau de neurones
@@ -258,8 +269,7 @@ function testNetwork(net,datasetTest,seuil)
 	return cptVP/n1test*100, cptFN/n2test*100
 end
 
-nbTests = 10	-- nombre de tests
-
+local nbTests = 10	-- nombre de tests
 print("[Main] " .. nbTests .. " tests vont être fait sur ces paramètres")
 
 local tpstab = torch.Tensor(nbTests):zero()
@@ -271,41 +281,45 @@ local VP3 = torch.Tensor(nbTests):zero()	-- nombre vrai positif au seuil 0.9
 local FN3 = torch.Tensor(nbTests):zero()	-- nombre faux negatif au seuil 0.9
 local meilleurNet = {}				-- permet de selectionner le meilleur réseau
 
-for i=1,nbTests do
+local i = 1
+while i<=nbTests do
 	-- Main
 	print("[Test" .. i .. "] Prétraitement de la base de donnée")
 	datasetApp,datasetTest = creation_dataset()
 	print("[Test" .. i .. "] Entrainement du réseau")
 	local tps = os.time()
-	net = entrainement(datasetApp)
+	net,stop = entrainement(datasetApp)
 	tps = (os.time() - tps)	-- durée de l'entrainement
-	tpstab[i] = tps		-- tableau des temps d'entrainement
-	print("[Test" .. i .. "] Temps d'entrainement : " .. math.floor(tps/86400) .. "d " .. math.floor(tps/3600)%86400 .. "h " .. math.floor(tps/60)%60 .. "m " .. tps%60 .. "s")
-	print("[Test" .. i .. "] Test du réseau")
-	r1,r2 = testNetwork(net,datasetTest,1)
-	if i==1 then
-		meilleurNet[1] = net
-		meilleurNet[2] = r1
-		meilleurNet[3] = r2
-	else
-		if r1 + r2 > meilleurNet[2] + meilleurNet[3] then	-- selection du meilleur reseau
+	if not(stop) then
+		tpstab[i] = tps		-- tableau des temps d'entrainement
+		print("[Test" .. i .. "] Temps d'entrainement : " .. math.floor(tps/86400) .. "d " .. math.floor(tps/3600)%86400 .. "h " .. math.floor(tps/60)%60 .. "m " .. tps%60 .. "s")
+		print("[Test" .. i .. "] Test du réseau")
+		r1,r2 = testNetwork(net,datasetTest,1)
+		if i==1 then
 			meilleurNet[1] = net
 			meilleurNet[2] = r1
 			meilleurNet[3] = r2
+		else
+			if r1 + r2 > meilleurNet[2] + meilleurNet[3] then	-- selection du meilleur reseau
+				meilleurNet[1] = net
+				meilleurNet[2] = r1
+				meilleurNet[3] = r2
+			end
 		end
+		-- sauvegarde des résultats des nbTests réseaux dans des tableaux (%VP et %FN pour les seuils 0.9, 0.9999 et 1)
+		VP1[i] = r1
+		FN1[i] = r2
+		r1,r2 = testNetwork(net,datasetTest,0.9999)
+		VP2[i] = r1
+		FN2[i] = r2
+		r1,r2 = testNetwork(net,datasetTest,0.9)
+		VP3[i] = r1
+		FN3[i] = r2
+		i = i + 1
 	end
-	-- sauvegarde des résultats des nbTests réseaux dans des tableaux (%VP et %FN pour les seuils 0.9, 0.9999 et 1)
-	VP1[i] = r1
-	FN1[i] = r2
-	r1,r2 = testNetwork(net,datasetTest,0.9999)
-	VP2[i] = r1
-	FN2[i] = r2
-	r1,r2 = testNetwork(net,datasetTest,0.9)
-	VP3[i] = r1
-	FN3[i] = r2
 end
 
-torch.save('network.t7', meilleurNet[1])	-- Sauvagarde du meilleur réseau de neurones en fichier .t7
+torch.save('network.t7', meilleurNet[1])	-- Sauvagarde du meilleur réseau de neurones en fichier network.t7
 print("[Main] Meilleur réseau sauvegardé")
 
 -- Affichage de statistiques sur les nbTests effectués
