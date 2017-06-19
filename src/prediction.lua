@@ -1,5 +1,63 @@
--- Programme de prédiction d'une vidéo à l'aide de masques
--- Groupe de PI n°4 | 27/04/2017
+--[[
+Copyright Maxime LEIBER,
+Copyright Manuel MATILDE,
+Copyright Antoine SOUSTELLE,
+programme crée le 6 mars 2017.
+
+Utilisation des bibliothèques libres suivantes :
+Torch
+Copyright (c) 2011-2014 Idiap Research Institute (Ronan Collobert)
+Copyright (c) 2012-2014 Deepmind Technologies (Koray Kavukcuoglu)
+Copyright (c) 2011-2012 NEC Laboratories America (Koray Kavukcuoglu)
+Copyright (c) 2011-2013 NYU (Clement Farabet)
+Copyright (c) 2006-2010 NEC Laboratories America (Ronan Collobert, Leon Bottou, Iain Melvin, Jason Weston)
+Copyright (c) 2006           Idiap Research Institute (Samy Bengio)
+Copyright (c) 2001-2004 Idiap Research Institute (Ronan Collobert, Samy Bengio, Johnny Mariethoz)
+OpenCV
+Copyright (C) 2000-2016, Intel Corporation, all rights reserved.
+Copyright (C) 2009-2011, Willow Garage Inc., all rights reserved.
+Copyright (C) 2009-2016, NVIDIA Corporation, all rights reserved.
+Copyright (C) 2010-2013, Advanced Micro Devices, Inc., all rights reserved.
+Copyright (C) 2015-2016, OpenCV Foundation, all rights reserved.
+Copyright (C) 2015-2016, Itseez Inc., all rights reserved.
+Autres
+Copyright (c) 2015 Egor Burkov and other contributors
+
+Contact :
+leibermaxime@gmail.com
+mtld.manu@gmail.com
+antoine.soustelle@wanadoo.fr
+
+Ce logiciel est un programme informatique servant à la détection
+des deux roues motorisés sur l'autoroute. Le projet a été fait
+par commande du Cerema.
+
+Ce logiciel est régi par la licence CeCILL soumise au droit français et
+respectant les principes de diffusion des logiciels libres. Vous pouvez
+utiliser, modifier et/ou redistribuer ce programme sous les conditions
+de la licence CeCILL telle que diffusée par le CEA, le CNRS et l'INRIA 
+sur le site "http://www.cecill.info".
+
+En contrepartie de l'accessibilité au code source et des droits de copie,
+de modification et de redistribution accordés par cette licence, il n'est
+offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,
+seule une responsabilité restreinte pèse sur l'auteur du programme,  le
+titulaire des droits patrimoniaux et les concédants successifs.
+
+A cet égard  l'attention de l'utilisateur est attirée sur les risques
+associés au chargement,  à l'utilisation,  à la modification et/ou au
+développement et à la reproduction du logiciel par l'utilisateur étant 
+donné sa spécificité de logiciel libre, qui peut le rendre complexe à 
+manipuler et qui le réserve donc à des développeurs et des professionnels
+avertis possédant  des  connaissances  informatiques approfondies.  Les
+utilisateurs sont donc invités à charger  et  tester  l'adéquation  du
+logiciel à leurs besoins dans des conditions permettant d'assurer la
+sécurité de leurs systèmes et ou de leurs données et, plus généralement, 
+à l'utiliser et l'exploiter dans les mêmes conditions de sécurité. 
+
+Le fait que vous puissiez accéder à cet en-tête signifie que vous avez 
+pris connaissance de la licence CeCILL, et que vous en avez accepté les
+termes.]]
 
 require 'torch'		-- Utilisation du module torch
 require 'nn'		-- Utilisation du module neural network
@@ -156,9 +214,12 @@ while true do
 			local x = keypoints.data[k].pt.x	-- coordonnées des points clés
 			local y = keypoints.data[k].pt.y
 			if y+L/2-1<width and y-L/2>1 and x-l/2>1 and x+l/2-1<length then	-- pour ne pas dépasser du cadre de l'image
-				local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1))	-- ??????
+				local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(y-L/2,y+L/2-1,x-l/2,x+l/2-1))	-- découpage de l'echantillon à prédire
+				-- local tps = os.clock() -- calcul temps pour traverser le réseau
 				local predicted = net:forward(sub:view(1,L,l))					-- prediction de l'echantillon
-				if predicted[1]==1 then								-- si prédiction >= seuil
+				-- tps = (os.clock() - tps)
+				-- print(tps) -- durée d'une prédiction en seconde 
+				if predicted[1]==1 then		-- si prédiction >= seuil
 					NPredicted = NPredicted + 1
 					CoordPredicted[NPredicted][1] = x
 					CoordPredicted[NPredicted][2] = y
@@ -182,7 +243,7 @@ while true do
 				-- si la distance entre l'abscisse de l'ancienne prediction et le blob actuel < 30
 				if math.abs(CoordTrack[j][1]-CoordPredicted[i][1])<50 and math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<30 then
 					new = false	-- ce n'est pas une nouvelle moto
-					if math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<15 then	-- si la vitesse (pixel/image) est <15
+					if math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<15 then	-- si la vitesse (pixels/image) est <15
 						table.remove(VTab,1)					-- on supprime la vitesse la plus ancienne du tableau
 						table.insert(VTab,math.abs(CoordTrack[j][2]-CoordPredicted[i][2]))	-- on y ajoute la vitesse actuelle
 						m=0	-- calcul vitesse moyenne
@@ -196,9 +257,9 @@ while true do
 					CoordTrack[j][2] = CoordPredicted[i][2]
 					CoordTrack[j][3] = CoordTrack[j][3] + 1
 					Coordchange[j] = true
-					if CoordTrack[j][3] > 5 then	-- cercle bleu indique que la moto sera comptée
-						cv.circle{frame, center={CoordTrack[j][1], CoordTrack[j][2]-10}, radius=5, color = {255,0,0},1,4,0}
-					end
+					--if CoordTrack[j][3] > 5 then	-- cercle bleu indique que la moto sera comptée
+					--	cv.circle{frame, center={CoordTrack[j][1], CoordTrack[j][2]-10}, radius=5, color = {255,0,0},1,4,0}
+					--end
 				end
 			end
 			if new then	-- si nouvelle moto détectée
