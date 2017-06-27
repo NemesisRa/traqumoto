@@ -68,14 +68,14 @@ require 'cv.imgproc'	-- Utilisation du module imgproc d'OpenCV
 local n1 = 1300			-- Nombre d'images de motos
 local n2 = 1800			-- Nombre d'images de pas motos
 local N = n1 + n2		-- Nombre total d'images
-local n1app = 500		-- Nombre d'images de motos pour l'apprentissage
-local n2app = 500		-- Nombre d'images de pas motos pour l'apprentissage
+local n1app = 1200		-- Nombre d'images de motos pour l'apprentissage
+local n2app = 1700		-- Nombre d'images de pas motos pour l'apprentissage
 local Napp = n1app + n2app	-- Nombre total d'images pour l'apprentissage
 local n1test = n1 - n1app	-- Nombre d'images de motos pour le test
 local n2test = n2 - n2app	-- Nombre d'images de pas motos pour le test
 local Ntest = n1test + n2test	-- Nombre total d'images pour le test
 
-local nbiterations = 20		-- nombre d'itérations
+local nbiterations = 25		-- nombre d'itérations
 
 local nt = 10	-- nombre de transformations
 local l = 60	-- largeur normalisée des images en entrée du réseau de neurone

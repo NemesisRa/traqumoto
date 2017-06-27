@@ -226,7 +226,7 @@ while true do
 					-- dessine cercles rouges sur la moto predite
 					for i=10,26,8 do
 						cv.circle{frame, center={x, y-10}, radius= i, color = {0,0,255},1,8,0}
-					end	
+					end
 				end
 				-- dessine un rectangle blanc à chaque prediction dans la fenetre en N&B
 				cv.rectangle{Img, pt1={x-l/2, y-L/2}, pt2={x+l/2-1, y+L/2-1}, color = {255,255,255}}
@@ -241,7 +241,7 @@ while true do
 			for j=1,NTrack do
 				-- si la distance entre l'ordonnée de l'ancienne prediction (traker) et le blob actuel < 50
 				-- si la distance entre l'abscisse de l'ancienne prediction et le blob actuel < 30
-				if math.abs(CoordTrack[j][1]-CoordPredicted[i][1])<50 and math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<30 then
+				if math.abs(CoordTrack[j][1]-CoordPredicted[i][1])<50 and math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<50 then
 					new = false	-- ce n'est pas une nouvelle moto
 					if math.abs(CoordTrack[j][2]-CoordPredicted[i][2])<15 then	-- si la vitesse (pixels/image) est <15
 						table.remove(VTab,1)					-- on supprime la vitesse la plus ancienne du tableau
@@ -274,6 +274,9 @@ while true do
 				if CoordTrack[j][1]-l/2>1 and CoordTrack[j][2]-L/2>1 and CoordTrack[j][1]+l/2-1<length and CoordTrack[j][2]+L/2-1<width then
 					local sub = torch.Tensor(1,L,l):copy(Imgpred:sub(CoordTrack[j][2]-L/2,CoordTrack[j][2]+L/2-1,CoordTrack[j][1]-l/2,CoordTrack[j][1]+l/2-1))
 					local predicted = net:forward(sub:view(1,L,l))
+					if predicted[1]>0.9 then	-- dessine un rectangle violet sur la moto traquee
+						cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2, CoordTrack[j][2]-L/2}, pt2={CoordTrack[j][1]+l/2-1, CoordTrack[j][2]+L/2-1}, color = {255,0,255}}
+					end
 					if predicted[1]==1 then	-- dessine un rectangle vert sur la moto traquee
 						cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2, CoordTrack[j][2]-L/2}, pt2={CoordTrack[j][1]+l/2-1, CoordTrack[j][2]+L/2-1}, color = {0,255,0}}
 						CoordTrack[j][3] = CoordTrack[j][3] + 1
@@ -306,10 +309,13 @@ while true do
 				local predicted = net:forward(sub:view(1,L,l))
 				if predicted[1]>0.8 then
 					cv.rectangle{frame, pt1={CoordTrack[j][1]-l/2-1, CoordTrack[j][2]-L/2-1}, pt2={CoordTrack[j][1]+l/2-1+1, CoordTrack[j][2]+L/2-1+1}, color = {255,0,0}}
+				else
+					cv.rectangle{ImgBlob, pt1={CoordTrack[j][1]-l/2-1, CoordTrack[j][2]-L/2-1}, pt2={CoordTrack[j][1]+l/2-1+1, CoordTrack[j][2]+L/2-1+1}, color = {255,0,255}}
 				end
 				CoordTrack[j][2] = CoordTrack[j][2]+VTrack
 			else	-- si hors cadre
-				if CoordTrack[j][3] > 5 then	-- om compte la moto si le compteur > 5
+				if CoordTrack[j][3] >= 5 then	-- om compte la moto si le compteur >= 5
+					print( cpt +1, CoordTrack[j][3])
 					cpt = cpt+1
 					cptglb = cptglb+1
 				end	-- supprime les données de la moto
